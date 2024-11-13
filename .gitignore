@@ -1,0 +1,208 @@
+# Ignored directories and files for the application build process
+app/bin/
+app/pde.jar
+build/macosx/work/
+arduino-core/bin/
+arduino-core/arduino-core.jar
+
+# Ignored bootloader files for the Arduino hardware
+hardware/arduino/bootloaders/caterina_LUFA/Descriptors.o
+hardware/arduino/bootloaders/caterina_LUFA/Descriptors.lst
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.sym
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.o
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.map
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.lst
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.lss
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.elf
+hardware/arduino/bootloaders/caterina_LUFA/Caterina.eep
+hardware/arduino/bootloaders/caterina_LUFA/.dep/
+
+# Ignored build artifacts
+build/*.zip
+build/*.tar.bz2
+
+# Ignored Windows-specific build files
+build/windows/work/
+build/windows/*.zip
+build/windows/*.tgz
+build/windows/*.tar.bz2
+build/windows/libastylej*
+build/windows/liblistSerials*
+build/windows/arduino-*.zip
+build/windows/dist/*.tar.gz
+build/windows/dist/*.tar.bz2
+build/windows/launch4j-*.tgz
+build/windows/launch4j-*.zip
+build/windows/launcher/launch4j
+build/windows/WinAVR-*.zip
+
+# Ignored macOS-specific build files
+build/macosx/arduino-*.zip
+build/macosx/dist/*.tar.gz
+build/macosx/dist/*.tar.bz2
+build/macosx/*.tar.bz2
+build/macosx/libastylej*
+build/macosx/appbundler*.jar
+build/macosx/appbundler*.zip
+build/macosx/appbundler
+build/macosx/appbundler-1.0ea-arduino?
+build/macosx/appbundler-1.0ea-arduino*.zip
+build/macosx/appbundler-1.0ea-upstream*.zip
+
+# Ignored Linux-specific build files
+build/linux/work/
+build/linux/dist/*.tar.gz
+build/linux/dist/*.tar.bz2
+build/linux/*.tgz
+build/linux/*.tar.xz
+build/linux/*.tar.bz2
+build/linux/*.zip
+build/linux/libastylej*
+build/linux/liblistSerials*
+
+# Ignored shared files and examples
+build/shared/arduino-examples*
+build/shared/reference*.zip
+build/shared/Edison*.zip
+build/shared/Galileo*.zip
+build/shared/WiFi101-Updater-ArduinoIDE-Plugin*.zip
+
+# Ignored IDE and system files
+test-bin
+*.iml
+.idea
+.DS_Store
+.directory
+
+# Ignored sensitive files
+hardware/arduino/avr/libraries/Bridge/examples/XivelyClient/passwords.h
+avr-toolchain-*.zip
+
+# Ignored project-specific directories
+/app/nbproject/private/
+/arduino-core/nbproject/private/
+/app/build/
+/arduino-core/build/
+
+# Ignored project configuration files
+manifest.mf
+nbbuild.xml
+nbproject
+
+# Python-specific ignores
+# ---------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE specific files
+.spyderproject
+.spyproject
+.ropeproject
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# Development tools
+.pdm.toml
+.pdm-python
+.pdm-build/
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
