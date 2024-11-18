@@ -5,7 +5,7 @@
 Adafruit_MPU6050 mpu;
 
 // Define the pins to monitor
-const int pins[] = {0, 1, 2, 3, 4};
+const int pins[] = {D0, D1, D2, D3, D6};
 const int numPins = sizeof(pins) / sizeof(pins[0]);
 
 void setup() {
@@ -53,6 +53,8 @@ void recordData(int triggeredPin) {
     mpu.getEvent(&a, &g, &temp);
 
     // Print data as a comma-separated list
+    Serial.print(millis() - startTime);
+    Serial.print(", ");
     Serial.print(triggeredPin);
     Serial.print(", ");
     Serial.print(a.acceleration.x);
@@ -67,7 +69,7 @@ void recordData(int triggeredPin) {
     Serial.print(", ");
     Serial.println(g.gyro.z);
 
-    delay(10); // Adjust sampling rate as needed
+    delay(1); // Adjust sampling rate as needed
   }
   Serial.println("Recording complete.");
 }
