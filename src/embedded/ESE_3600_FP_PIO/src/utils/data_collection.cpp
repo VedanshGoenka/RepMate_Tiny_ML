@@ -1,21 +1,18 @@
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
-#include <Wire.h>
+#include "data_collection.h"
 
 Adafruit_MPU6050 mpu;
 
-// Define the pins to monitor
-const int pins[] = {D0, D1, D2, D3, D6};
-const int numPins = sizeof(pins) / sizeof(pins[0]);
-
-void setup() {
+void data_collection_setup()
+{
   Serial.begin(115200);
-  while (!Serial) delay(10);
+  while (!Serial)
+    delay(10);
 
   Serial.println("Adafruit MPU6050 test!");
 
   // Initialize MPU6050
-  while (!mpu.begin()) {
+  while (!mpu.begin())
+  {
     Serial.println("Failed to find MPU6050 chip");
     delay(500);
   }
@@ -26,29 +23,35 @@ void setup() {
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
   // Set pin modes
-  for (int i = 0; i < numPins; i++) {
+  for (int i = 0; i < numPins; i++)
+  {
     pinMode(pins[i], INPUT);
   }
 
   Serial.println("Setup complete.");
 }
 
-void loop() {
+void data_collection_loop()
+{
   // Check if any monitored pin is HIGH
-  for (int i = 0; i < numPins; i++) {
-    if (digitalRead(pins[i]) == HIGH) {
+  for (int i = 0; i < numPins; i++)
+  {
+    if (digitalRead(pins[i]) == HIGH)
+    {
       recordData(pins[i]);
     }
   }
   delay(10);
 }
 
-void recordData(int triggeredPin) {
+void recordData(int triggeredPin)
+{
   unsigned long startTime = millis();
   unsigned long duration = 3000; // Record for 3 seconds
 
   Serial.println("Recording data...");
-  while (millis() - startTime < duration) {
+  while (millis() - startTime < duration)
+  {
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 

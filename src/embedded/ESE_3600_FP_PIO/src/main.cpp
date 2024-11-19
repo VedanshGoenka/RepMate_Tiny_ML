@@ -1,16 +1,12 @@
 #include <Arduino.h>
+#include "utils/data_collection.h"
 
-#include "data_collection.ino"
+void setup()
+{
+  data_collection_setup();
+}
 
-// void setup()
-// {
-//   pinMode(LED_BUILTIN, OUTPUT);
-// }
-
-// void loop()
-// {
-//   digitalWrite(LED_BUILTIN, HIGH);
-//   delay(1000);
-//   digitalWrite(LED_BUILTIN, LOW);
-//   delay(1000);
-// }
+void loop()
+{
+  data_collection_loop();
+}
