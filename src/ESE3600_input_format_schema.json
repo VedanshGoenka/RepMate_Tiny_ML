@@ -1,0 +1,49 @@
+{
+  "lift_name": {
+    "type": "string",
+    "description": "The name of the lift",
+    "possible_values": ["Dumbbell Curl", "Bench Press", "Dumbbell Flys"]
+  },
+  "lift_classification": {
+    "type": "string",
+    "description": "Rating and classification of the lift",
+    "possible_values": ["Proper Form","Lift Instability", "Partial Motion", "Off-Axis", "Swinging the Weight"]
+  },
+  "Time Series Data": {
+    "type": "array",
+    "description": "Time series data of the lift",
+    "items": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "float",
+          "description": "The timestamp of the data point"
+        },
+        "Accelerometer X": {
+          "type": "float",
+          "description": "The X-axis acceleration of the accelerometer"
+        },
+        "Accelerometer Y": {
+          "type": "float",
+          "description": "The Y-axis acceleration of the accelerometer"
+        },
+        "Accelerometer Z": {
+          "type": "float",
+          "description": "The Z-axis acceleration of the accelerometer"
+        },
+        "Gyroscope X": {
+          "type": "float",
+          "description": "The X-axis rotation of the gyroscope"
+        },
+        "Gyroscope Y": {
+          "type": "float",
+          "description": "The Y-axis rotation of the gyroscope"
+        },
+        "Gyroscope Z": {
+          "type": "float",
+          "description": "The Z-axis rotation of the gyroscope"
+        }
+      }
+    }
+  }
+}
