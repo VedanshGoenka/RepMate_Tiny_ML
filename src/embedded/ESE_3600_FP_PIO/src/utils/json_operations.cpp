@@ -28,14 +28,12 @@ void setupJSON(const int pin)
 void createJSONHeading(String lift_name, String lift_classification)
 {
   if (!json_file)
-  {
     return;
-  }
+
   json_file.println("{");
-  json_file.printf("\"lift_name\": \"%s\",\n", lift_name.c_str());
-  json_file.printf("\"lift_classification\": \"%s\",\n", lift_classification.c_str());
-  json_file.println("\"Time Series Data\": [");
-  // save the state by flushing the file
+  json_file.printf("\"liftName\": \"%s\",\n", lift_name.c_str());
+  json_file.printf("\"liftClassification\": \"%s\",\n", lift_classification.c_str());
+  json_file.println("\"timeSeriesData\": [");
   json_file.flush();
   isFirstReading = true;
 }
@@ -43,15 +41,15 @@ void createJSONHeading(String lift_name, String lift_classification)
 void addDataPoint(float timestamp, float accel_x, float accel_y, float accel_z, float gyro_x, float gyro_y, float gyro_z)
 {
   if (!json_file)
-  {
     return;
-  }
+
   if (!isFirstReading)
   {
     json_file.println(",");
   }
-  json_file.printf("{\"timestamp\": %f, \"Accelerometer X\": %f, \"Accelerometer Y\": %f, \"Accelerometer Z\": %f, \"Gyroscope X\": %f, \"Gyroscope Y\": %f, \"Gyroscope Z\": %f}\n",
-                   timestamp, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
+  json_file.printf(
+      "{\"timestamp\": %.3f, \"accelerometerX\": %.3f, \"accelerometerY\": %.3f, \"accelerometerZ\": %.3f, \"gyroscopeX\": %.3f, \"gyroscopeY\": %.3f, \"gyroscopeZ\": %.3f}\n",
+      timestamp, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z);
   isFirstReading = false;
 }
 
