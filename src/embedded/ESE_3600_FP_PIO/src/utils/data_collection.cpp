@@ -4,18 +4,19 @@ Adafruit_MPU6050 mpu;
 
 // Configuration Parameters
 const uint8_t pins[5] = {D0, D1, D2, D3, D6};
-const String lift_names[3] = {"Dumbbell Curl", "Bench Press", "Dumbbell Flys"};
-String current_lift = lift_names[0];
-bool output_to_json = false;
+bool output_to_json = true;
 const unsigned long duration = 3000;
-const unsigned long sampling_rate = 1;
+const unsigned long sampling_rate = 1; // Note there is a +3 ms delay in the loop.
+
+int high_pin_loops = 0;
+const int skip_high_pin_loops = 5; // Remove any sticky high pins for the first 100 loops
 
 const std::map<int, String> lift_classification_map = {
-    {pins[0], "Proper Form"},
-    {pins[1], "Lift Instability"},
-    {pins[2], "Partial Motion"},
-    {pins[3], "Off-Axis"},
-    {pins[4], "Swinging the Weight"}};
+    {pins[0], "p_f"},  // proper form
+    {pins[1], "l_i"},  // lift instability
+    {pins[2], "p_m"},  // partial motion
+    {pins[3], "o_a"},  // off axis
+    {pins[4], "s_w"}}; // swinging weight
 
 void data_collection_setup()
 {
@@ -56,20 +57,23 @@ void data_collection_setup()
 
 void data_collection_loop()
 {
+
   // Check if any monitored pin is HIGH
   for (int i = 0; i < numPins; i++)
   {
-    if (digitalRead(pins[i]) == HIGH)
+    if (digitalRead(pins[i]) == HIGH && high_pin_loops > skip_high_pin_loops)
     {
       recordData(pins[i], output_to_json);
     }
   }
+  high_pin_loops++;
   delay(10);
 }
 
 void recordData(int triggeredPin, bool to_json)
 {
   Serial.println("Recording data...");
+  Serial.println(high_pin_loops);
   if (to_json)
   {
     setupJSON(triggeredPin);
@@ -92,12 +96,12 @@ void recordData(int triggeredPin, bool to_json)
     }
     delay(sampling_rate); // Adjust sampling rate as needed
   }
-  Serial.println("Recording complete.");
   if (to_json)
   {
     closeJSONArray();
     closeDataFile();
   }
+  Serial.println("Recording complete.");
 }
 
 void printData(unsigned long time, int triggeredPin, sensors_event_t a, sensors_event_t g)

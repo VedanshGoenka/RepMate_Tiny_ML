@@ -1,12 +1,38 @@
 #include "file_system.h"
 
+bool allow_reformat = true; // Allow the file system to be reformatted during setup, if copy_files is false
+
 bool file_system_setup()
 {
-  if (!LittleFS.begin())
+  // First try to mount the filesystem
+  if (!LittleFS.begin(allow_reformat && !copy_files))
   {
-    Serial.println("Failed to mount LittleFS");
+    Serial.println("Initial LittleFS Mount Failed");
+  }
+
+  // Handle formatting if needed
+  if (force_reformat && !copy_files)
+  {
+    Serial.println("Forcing LittleFS format...");
+    LittleFS.format();
+    // After format, we must explicitly mount again
+    if (!LittleFS.begin(false))
+    {
+      Serial.println("Failed to mount after forced format");
+      return false;
+    }
+    Serial.println("LittleFS forcefully formatted and mounted");
+    return true;
+  }
+
+  // If we reach here, try one more time with allow_reformat
+  if (!LittleFS.begin(allow_reformat && !copy_files))
+  {
+    Serial.println("LittleFS Mount Failed");
     return false;
   }
+
+  Serial.println("LittleFS mounted successfully");
   return true;
 }
 
@@ -19,15 +45,18 @@ bool setup_folder_structure(uint8_t pin)
     return false;
   }
 
-  String folder_path = lift_class_folder_map.at(pin);
+  String folder_path = "/" + lift_class_folder_map.at(pin); // Add leading slash
 
+  // Create folder if it doesn't exist
   if (!LittleFS.exists(folder_path))
   {
     Serial.printf("Creating folder: %s\n", folder_path.c_str());
-    return LittleFS.mkdir(folder_path);
+    if (!LittleFS.mkdir(folder_path))
+    {
+      Serial.printf("Failed to create folder: %s\n", folder_path.c_str());
+      return false;
+    }
   }
-
-  Serial.printf("Folder already exists: %s\n", folder_path.c_str());
   return true;
 }
 
@@ -39,7 +68,7 @@ int get_file_count(uint8_t pin)
     return -1;
   }
 
-  String folder_path = lift_class_folder_map.at(pin);
+  String folder_path = "/" + lift_class_folder_map.at(pin);
   File root = LittleFS.open(folder_path);
   if (!root)
   {
@@ -74,24 +103,29 @@ String add_file_to_folder(uint8_t pin, String file_name, String extension)
     return "";
   }
 
-  String folder_path = lift_class_folder_map.at(pin);
+  // Ensure proper path format with leading slash
+  String folder_path = "/" + lift_class_folder_map.at(pin);
+
+  // Make sure folder exists
+  if (!setup_folder_structure(pin))
+  {
+    return "";
+  }
+
   int count = get_file_count(pin);
   if (count < 0)
     return "";
 
   String file_path = folder_path + "/" + file_name + String(count) + extension;
 
-  if (!LittleFS.exists(file_path))
+  File file = LittleFS.open(file_path, FILE_WRITE); // Use FILE_WRITE constant
+  if (!file)
   {
-    File file = LittleFS.open(file_path, "w");
-    if (!file)
-    {
-      Serial.printf("Failed to create file: %s\n", file_path.c_str());
-      return "";
-    }
-    file.close();
-    Serial.printf("Created file: %s\n", file_path.c_str());
+    Serial.printf("Failed to create file: %s\n", file_path.c_str());
+    return "";
   }
+  file.close();
+  Serial.printf("Created file: %s\n", file_path.c_str());
   return file_path;
 }
 

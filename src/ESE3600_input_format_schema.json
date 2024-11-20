@@ -1,45 +1,45 @@
 {
-  "liftName": {
+  "lN": {
     "type": "string",
     "description": "The name of the lift",
-    "possible_values": ["Dumbbell Curl", "Bench Press", "Dumbbell Flys"]
+    "possible_values": ["dC", "bP", "dF"]
   },
-  "liftClassification": {
+  "lC": {
     "type": "string",
     "description": "Rating and classification of the lift",
-    "possible_values": ["Proper Form","Lift Instability", "Partial Motion", "Off-Axis", "Swinging the Weight"]
+    "possible_values": ["p_f", "l_i", "p_m", "o_a", "s_w"]
   },
-  "timeSeriesData": {
+  "tSD": {
     "type": "array",
     "description": "Time series data of the lift",
     "items": {
       "type": "object",
       "properties": {
-        "timestamp": {
+        "t": {
           "type": "float",
           "description": "The timestamp of the data point"
         },
-        "accelerometerX": {
+        "aX": {
           "type": "float",
           "description": "The X-axis acceleration of the accelerometer"
         },
-        "accelerometerY": {
+        "aY": {
           "type": "float",
           "description": "The Y-axis acceleration of the accelerometer"
         },
-        "accelerometerZ": {
+        "aZ": {
           "type": "float",
           "description": "The Z-axis acceleration of the accelerometer"
         },
-        "gyroscopeX": {
+        "gX": {
           "type": "float",
           "description": "The X-axis rotation of the gyroscope"
         },
-        "gyroscopeY": {
+        "gY": {
           "type": "float",
           "description": "The Y-axis rotation of the gyroscope"
         },
-        "gyroscopeZ": {
+        "gZ": {
           "type": "float",
           "description": "The Z-axis rotation of the gyroscope"
         }

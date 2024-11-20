@@ -2,6 +2,9 @@
 
 #include <ArduinoJson.h>
 #include "file_system.h"
+#include "data_collection.h"
+
+extern bool recording;
 
 void setupJSON(const int pin);
 

@@ -8,6 +8,8 @@
 
 #include "file_system.h"
 #include "json_operations.h"
+#include "main.h"
+
 
 // Pins to monitor
 const uint8_t numPins = 5;
