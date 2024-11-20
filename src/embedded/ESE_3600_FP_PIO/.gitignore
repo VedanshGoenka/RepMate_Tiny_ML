@@ -5,3 +5,7 @@
 .vscode/ipch
 .vscode/*.code-workspace
 .vscode/settings.json
+
+.venv/
+__pycache__/
+*.pyc
