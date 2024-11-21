@@ -5,7 +5,7 @@ Adafruit_MPU6050 mpu;
 // Configuration Parameters
 const uint8_t pins[5] = {D0, D1, D2, D3, D6};
 bool output_to_json = true;
-const unsigned long duration = 3000;
+const unsigned long duration = 5000;
 const unsigned long sampling_rate = 1; // Note there is a +3 ms delay in the loop.
 
 int high_pin_loops = 0;
