@@ -11,8 +11,8 @@ const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, 
 String current_lift = lift_names[1];
 
 // TFLite Inference Constants
-const int input_length = 32;
-const int output_length = 3;
+const int input_length = 1;
+const int output_length = 1;
 
 void setup()
 {
@@ -42,9 +42,10 @@ void loop()
   }
   else if (run_inference)
   {
-    float input_data[input_length] = {0};
-    float output_data[output_length] = {0};
+    float input_data[input_length] = {1};
+    float output_data[output_length];
     // Run inference with proper arguments
     runInference(input_data, input_length, output_data, output_length);
+    delay(5000);
   }
 }

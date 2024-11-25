@@ -9,7 +9,8 @@ namespace {
   tflite::MicroInterpreter* interpreter = nullptr;
 
   // Define memory for input, output, and intermediate tensors
-  constexpr int kTensorArenaSize = 10 * 1024;  // Adjust this as per the model's memory requirement
+  // kTensor Area size was too small, was originally 10 x 1024, making it larger
+  constexpr int kTensorArenaSize = 100 * 1024;  // Adjust this as per the model's memory requirement
   uint8_t tensor_arena[kTensorArenaSize];
 }
 
@@ -69,4 +70,6 @@ void runInference(const float* input_data, int input_length, float* output_data,
   for (int i = 0; i < output_length; ++i) {
     output_data[i] = output->data.f[i];
   }
+  printf("Inference complete.\n");
+  printf("Output: %f\n", output_data[0]);
 }
