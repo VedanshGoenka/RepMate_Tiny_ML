@@ -1,5 +1,4 @@
 #include "inference.h"
-#include "inference_model_data.h"
 
 // TensorFlow Lite globals
 namespace {
@@ -19,7 +18,7 @@ void setupModel() {
   error_reporter = &micro_error_reporter;
 
   // Map the model
-  model = tflite::GetModel(g_magic_wand_model_data);
+  model = tflite::GetModel(g_rep_mate_model_data);
   if (model->version() != TFLITE_SCHEMA_VERSION) {
     error_reporter->Report("Model schema mismatch.");
     return;
