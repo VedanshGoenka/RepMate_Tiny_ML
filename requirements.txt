@@ -7,3 +7,5 @@ matplotlib
 seaborn
 jupyter
 ipykernel
+pydot
+graphviz
