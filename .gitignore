@@ -1,3 +1,6 @@
+# CUSTOM IGNORE
+src/model/notebooks/*/dataset/**
+
 # Ignored directories and files for the application build process
 app/bin/
 app/pde.jar

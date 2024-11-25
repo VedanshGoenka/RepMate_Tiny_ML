@@ -21,7 +21,7 @@ fi
 
 # Create new virtual environment
 echo -e "${BLUE}Creating new virtual environment...${NC}"
-python3 -m venv .venv
+python3.10 -m venv .venv
 
 # Activate virtual environment
 echo -e "${BLUE}Activating virtual environment...${NC}"
