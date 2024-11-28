@@ -44,7 +44,7 @@ void loop()
   {
     float input_data[input_length] = {1};
     float output_data[output_length];
-    // Run inference with proper arguments
+    
     runInference(input_data, input_length, output_data, output_length);
     delay(5000);
   }
