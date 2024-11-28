@@ -1,7 +1,5 @@
 #include "inference.h"
 
-Adafruit_MPU6050 mpu;
-
 // TensorFlow Lite globals
 namespace {
   tflite::MicroErrorReporter micro_error_reporter;
@@ -42,17 +40,58 @@ void setupModel() {
 }
 
 void runInference(const float* input_data, int input_length, float* output_data, int output_length) {
-  // Get input tensor
+  // // Get input tensor
+  // TfLiteTensor* input = interpreter->input(0);
+  // // Ensure input size matches
+  // if (input->dims->data[0] != input_length) {
+  //   error_reporter->Report("Input size mismatch.");
+  //   return;
+  // }
+
+  // // Copy input data
+  // for (int i = 0; i < input_length; ++i) {
+  //   input->data.f[i] = input_data[i];
+  // }
+
+  // // Run inference
+  // if (interpreter->Invoke() != kTfLiteOk) {
+  //   error_reporter->Report("Invoke failed.");
+  //   return;
+  // }
+
+  // // Get output tensor and copy data to output array
+  // TfLiteTensor* output = interpreter->output(0);
+  // if (output->dims->data[0] != output_length) {
+  //   error_reporter->Report("Output size mismatch.");
+  //   return;
+  // }
+
+  // for (int i = 0; i < output_length; ++i) {
+  //   output_data[i] = output->data.f[i];
+  // }
+  // printf("Inference complete.\n");
+  // printf("Output: %f\n", output_data[0]);
+  // dataBuffer.clear();
+
+  // Ensure enough data is present to match the input tensor's shape
   TfLiteTensor* input = interpreter->input(0);
-  // Ensure input size matches
-  if (input->dims->data[0] != input_length) {
-    error_reporter->Report("Input size mismatch.");
+  const int num_samples = input->dims->data[1]; // Expected number of samples (e.g., 200)
+  const int features_per_sample = input->dims->data[2]; // Features per sample (e.g., 6)
+
+  if (dataBuffer.size() < num_samples) {
+    error_reporter->Report("Insufficient data in buffer for inference.");
     return;
   }
 
-  // Copy input data
-  for (int i = 0; i < input_length; ++i) {
-    input->data.f[i] = input_data[i];
+  // Copy data into the input tensor
+  for (int i = 0; i < num_samples; ++i) {
+    const DataPoint& dp = dataBuffer[i];
+    input->data.f[i * features_per_sample + 0] = dp.accel_x;
+    input->data.f[i * features_per_sample + 1] = dp.accel_y;
+    input->data.f[i * features_per_sample + 2] = dp.accel_z;
+    input->data.f[i * features_per_sample + 3] = dp.gyro_x;
+    input->data.f[i * features_per_sample + 4] = dp.gyro_y;
+    input->data.f[i * features_per_sample + 5] = dp.gyro_z;
   }
 
   // Run inference
@@ -61,18 +100,15 @@ void runInference(const float* input_data, int input_length, float* output_data,
     return;
   }
 
-  // Get output tensor and copy data to output array
+  // Get the output tensor and print the results
   TfLiteTensor* output = interpreter->output(0);
-  if (output->dims->data[0] != output_length) {
-    error_reporter->Report("Output size mismatch.");
-    return;
+  printf("Inference output: ");
+  for (int i = 0; i < output->dims->data[1]; ++i) { // Assuming output shape [1, 5]
+    printf("%f ", output->data.f[i]);
   }
+  printf("\n");
 
-  for (int i = 0; i < output_length; ++i) {
-    output_data[i] = output->data.f[i];
-  }
-  printf("Inference complete.\n");
-  printf("Output: %f\n", output_data[0]);
+  // Clear the buffer after inference
   dataBuffer.clear();
 }
 
@@ -92,6 +128,7 @@ void pollSetup()
 void pollLoop()
 {
   unsigned long startTime = millis();
+  int duration = 5000;
   while (millis() - startTime < duration) {
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);

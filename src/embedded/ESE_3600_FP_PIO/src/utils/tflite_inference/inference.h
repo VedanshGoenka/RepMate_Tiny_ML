@@ -26,8 +26,8 @@ struct DataPoint {
     float gyro_z;
 };
 
-std::vector<DataPoint> dataBuffer;
-long duration = 5000;
+extern std::vector<DataPoint> dataBuffer;
+extern Adafruit_MPU6050 mpu;
 
 // Functions to initialize and run inference
 void setupModel();
