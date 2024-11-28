@@ -1,5 +1,7 @@
 #include "inference.h"
 
+Adafruit_MPU6050 mpu;
+
 // TensorFlow Lite globals
 namespace {
   tflite::MicroErrorReporter micro_error_reporter;
@@ -42,7 +44,6 @@ void setupModel() {
 void runInference(const float* input_data, int input_length, float* output_data, int output_length) {
   // Get input tensor
   TfLiteTensor* input = interpreter->input(0);
-
   // Ensure input size matches
   if (input->dims->data[0] != input_length) {
     error_reporter->Report("Input size mismatch.");
@@ -72,4 +73,39 @@ void runInference(const float* input_data, int input_length, float* output_data,
   }
   printf("Inference complete.\n");
   printf("Output: %f\n", output_data[0]);
+  dataBuffer.clear();
+}
+
+void pollSetup()
+{
+  // Initialize MPU6050
+  while (!mpu.begin())
+  {
+    delay(500);
+  }
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+}
+
+void pollLoop()
+{
+  unsigned long startTime = millis();
+  while (millis() - startTime < duration) {
+        sensors_event_t a, g, temp;
+        mpu.getEvent(&a, &g, &temp);
+
+        // Add data to buffer
+        addDataToBuffer(
+            millis() - startTime,
+            a.acceleration.x, a.acceleration.y, a.acceleration.z,
+            g.gyro.x, g.gyro.y, g.gyro.z
+        );
+  }
+}
+
+void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz) {
+    DataPoint dp = {timestamp, ax, ay, az, gx, gy, gz};
+    dataBuffer.push_back(dp);
 }
