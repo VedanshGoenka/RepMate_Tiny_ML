@@ -78,20 +78,32 @@ void runInference(const float* input_data, int input_length, float* output_data,
   const int num_samples = input->dims->data[1]; // Expected number of samples (e.g., 200)
   const int features_per_sample = input->dims->data[2]; // Features per sample (e.g., 6)
 
-  if (dataBuffer.size() < num_samples) {
-    error_reporter->Report("Insufficient data in buffer for inference.");
-    return;
-  }
+  printf("Num samples: %d\n", num_samples);
+  printf("Features per sample: %d\n", features_per_sample);
+
+  // if (dataBuffer.size() < num_samples) {
+  //   error_reporter->Report("Insufficient data in buffer for inference.");
+  //   return;
+  // }
 
   // Copy data into the input tensor
+  // for (int i = 0; i < num_samples; ++i) {
+  //   const DataPoint& dp = dataBuffer[i];
+  //   input->data.f[i * features_per_sample + 0] = dp.accel_x;
+  //   input->data.f[i * features_per_sample + 1] = dp.accel_y;
+  //   input->data.f[i * features_per_sample + 2] = dp.accel_z;
+  //   input->data.f[i * features_per_sample + 3] = dp.gyro_x;
+  //   input->data.f[i * features_per_sample + 4] = dp.gyro_y;
+  //   input->data.f[i * features_per_sample + 5] = dp.gyro_z;
+  // }
+
   for (int i = 0; i < num_samples; ++i) {
-    const DataPoint& dp = dataBuffer[i];
-    input->data.f[i * features_per_sample + 0] = dp.accel_x;
-    input->data.f[i * features_per_sample + 1] = dp.accel_y;
-    input->data.f[i * features_per_sample + 2] = dp.accel_z;
-    input->data.f[i * features_per_sample + 3] = dp.gyro_x;
-    input->data.f[i * features_per_sample + 4] = dp.gyro_y;
-    input->data.f[i * features_per_sample + 5] = dp.gyro_z;
+    input->data.f[i * features_per_sample + 0] = input_data[i * 6 + 0];
+    input->data.f[i * features_per_sample + 1] = input_data[i * 6 + 1];
+    input->data.f[i * features_per_sample + 2] = input_data[i * 6 + 2];
+    input->data.f[i * features_per_sample + 3] = input_data[i * 6 + 3];
+    input->data.f[i * features_per_sample + 4] = input_data[i * 6 + 4];
+    input->data.f[i * features_per_sample + 5] = input_data[i * 6 + 5];
   }
 
   // Run inference
@@ -109,40 +121,40 @@ void runInference(const float* input_data, int input_length, float* output_data,
   printf("\n");
 
   // Clear the buffer after inference
-  dataBuffer.clear();
+  // dataBuffer.clear();
 }
 
-void pollSetup()
-{
-  // Initialize MPU6050
-  while (!mpu.begin())
-  {
-    delay(500);
-  }
+// void pollSetup()
+// {
+//   // Initialize MPU6050
+//   while (!mpu.begin())
+//   {
+//     delay(500);
+//   }
 
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-}
+//   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+//   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+//   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+// }
 
-void pollLoop()
-{
-  unsigned long startTime = millis();
-  int duration = 5000;
-  while (millis() - startTime < duration) {
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&a, &g, &temp);
+// void pollLoop()
+// {
+//   unsigned long startTime = millis();
+//   int duration = 5000;
+//   while (millis() - startTime < duration) {
+//         sensors_event_t a, g, temp;
+//         mpu.getEvent(&a, &g, &temp);
 
-        // Add data to buffer
-        addDataToBuffer(
-            millis() - startTime,
-            a.acceleration.x, a.acceleration.y, a.acceleration.z,
-            g.gyro.x, g.gyro.y, g.gyro.z
-        );
-  }
-}
+//         // Add data to buffer
+//         addDataToBuffer(
+//             millis() - startTime,
+//             a.acceleration.x, a.acceleration.y, a.acceleration.z,
+//             g.gyro.x, g.gyro.y, g.gyro.z
+//         );
+//   }
+// }
 
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz) {
     DataPoint dp = {timestamp, ax, ay, az, gx, gy, gz};
-    dataBuffer.push_back(dp);
+    // dataBuffer.push_back(dp);
 }

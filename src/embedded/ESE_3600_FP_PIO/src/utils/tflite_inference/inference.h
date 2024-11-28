@@ -26,14 +26,14 @@ struct DataPoint {
     float gyro_z;
 };
 
-extern std::vector<DataPoint> dataBuffer;
-extern Adafruit_MPU6050 mpu;
+// extern std::vector<DataPoint> dataBuffer;
+// extern Adafruit_MPU6050 mpu;
 
 // Functions to initialize and run inference
 void setupModel();
 void runInference(const float* input_data, int input_length, float* output_data, int output_length);
-void pollSetup();
-void pollLoop();
+// void pollSetup();
+// void pollLoop();
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
 
 #endif
