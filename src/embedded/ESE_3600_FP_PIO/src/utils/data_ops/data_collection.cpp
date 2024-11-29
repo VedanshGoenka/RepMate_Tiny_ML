@@ -1,6 +1,5 @@
 #include "data_collection.h"
-
-Adafruit_MPU6050 mpu;
+#include "../hardware/mpu.h"
 
 // Configuration Parameters
 const uint8_t pins[5] = {D0, D1, D2, D3, D6};

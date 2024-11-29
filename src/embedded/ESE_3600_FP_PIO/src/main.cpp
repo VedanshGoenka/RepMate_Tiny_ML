@@ -26,8 +26,7 @@ void setup()
   }
   else if (run_inference)
   {
-    setupModel();
-    pollSetup();
+    setupModel(false);
   }
 }
 
@@ -54,8 +53,7 @@ void loop()
     // }
 
     // runInference(input_data, input_length, output_data, output_length);
-    pollLoop();
-    runInference();
+    printModelDetails(true);
     delay(5000);
   }
 }

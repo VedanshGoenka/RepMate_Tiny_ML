@@ -1,8 +1,5 @@
 #include "buffer.h"
 
-// Initialize global buffer instance
-CircularBuffer<TimeSeriesDataPoint> BUFFER;
-
 // Constructor implementation
 template <typename T>
 CircularBuffer<T>::CircularBuffer()

@@ -40,6 +40,3 @@ public:
   void clear();
   void getRecent(size_t n, T *output) const;
 };
-
-// Declare global buffer instance
-extern CircularBuffer<TimeSeriesDataPoint> BUFFER;
