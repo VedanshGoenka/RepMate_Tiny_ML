@@ -3,6 +3,23 @@
 // Initialize global buffer instance
 CircularBuffer<TimeSeriesDataPoint> BUFFER;
 
+// Constructor implementation
+template <typename T>
+CircularBuffer<T>::CircularBuffer()
+{
+  buffer = new T[BUFFER_LENGTH];
+  head = 0;
+  tail = 0;
+  count = 0;
+}
+
+// Destructor implementation
+template <typename T>
+CircularBuffer<T>::~CircularBuffer()
+{
+  delete[] buffer;
+}
+
 // Define the push method for the circular buffer template class
 template <typename T>
 void CircularBuffer<T>::push(const T &data)
@@ -35,7 +52,7 @@ T CircularBuffer<T>::get(size_t index) const
 
 // Define the getData method for the circular buffer template class
 template <typename T>
-void CircularBuffer<T>::getData(float16_t *output, size_t required_length) const
+void CircularBuffer<T>::getData(float *output, size_t required_length) const
 {
   if (required_length > count)
   {
@@ -77,3 +94,22 @@ void CircularBuffer<T>::clear()
   tail = 0;
   count = 0;
 }
+
+// Get the most recent n elements into output array
+template <typename T>
+void CircularBuffer<T>::getRecent(size_t n, T *output) const
+{
+  if (n > count)
+  {
+    throw std::runtime_error("Not enough data in buffer");
+  }
+
+  size_t start = (head - n + BUFFER_LENGTH) % BUFFER_LENGTH;
+  for (size_t i = 0; i < n; i++)
+  {
+    output[i] = buffer[(start + i) % BUFFER_LENGTH];
+  }
+}
+
+// Explicit template instantiation
+template class CircularBuffer<TimeSeriesDataPoint>;

@@ -45,12 +45,12 @@ void addDataToBuffer(float aX, float aY, float aZ, float gX, float gY, float gZ)
 {
   // Create a new data point with float16 precision (half precision, reduced memory usage by 50%)
   TimeSeriesDataPoint dataPoint = {
-      .aX = static_cast<float16_t>(aX),
-      .aY = static_cast<float16_t>(aY),
-      .aZ = static_cast<float16_t>(aZ),
-      .gX = static_cast<float16_t>(gX),
-      .gY = static_cast<float16_t>(gY),
-      .gZ = static_cast<float16_t>(gZ)};
+      .aX = static_cast<float>(aX),
+      .aY = static_cast<float>(aY),
+      .aZ = static_cast<float>(aZ),
+      .gX = static_cast<float>(gX),
+      .gY = static_cast<float>(gY),
+      .gZ = static_cast<float>(gZ)};
 
   // Add to circular buffer
   BUFFER.push(dataPoint);
