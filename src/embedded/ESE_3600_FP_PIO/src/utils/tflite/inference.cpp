@@ -88,6 +88,8 @@ void setupModel(bool verbose = false)
   printModelDetails(verbose);
 
   TF_LITE_REPORT_ERROR(error_reporter, "Model setup complete.");
+
+  setupOutputLights();
 }
 
 void doInference()
@@ -120,10 +122,19 @@ void doInference()
   // Get the output tensor and print the results
   TfLiteTensor *output = interpreter->output(0);
   printf("Inference output: ");
+  int max_index = 0;
+  float max_value = output->data.f[0];
   for (int i = 0; i < output->dims->data[1]; ++i)
   { // Assuming output shape [1, 5]
     printf("%f ", output->data.f[i]);
+    if (output->data.f[i] > max_value)
+    {
+      max_value = output->data.f[i];
+      max_index = i;
+    }
   }
+  printf("\n");
+  printf("Inference result: %s\n", labels[max_index]);
   printf("\n");
 }
 
@@ -192,4 +203,20 @@ void printModelDetails(bool shouldPrint = false)
 
   printf("\nTensor Arena Size: %d bytes\n", kTensorArenaSize);
   printf("===================\n\n");
+}
+
+void setupOutputLights() {
+  uint8_t pins[7] = {D0, D1, D2, D3, D6, D7, D8};
+  for (int i = 0; i < 7; i++) {
+    pinMode(pins[i], OUTPUT);
+    digitalWrite(pins[i], LOW);
+  }
+}
+
+void outputLights(int index) {
+  uint8_t pins[7] = {D0, D1, D2, D3, D6, D7, D8};
+  for (int i = 0; i < 7; i++) {
+    digitalWrite(pins[i], LOW);
+  }
+  digitalWrite(pins[index], HIGH);
 }

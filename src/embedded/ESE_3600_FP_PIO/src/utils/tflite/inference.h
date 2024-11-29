@@ -30,5 +30,7 @@ void printModelDetails(bool shouldPrint);
 void setupModel(bool verbose);
 void doInference();
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
+void setupOutputLights();
+void outputLights(int index);
 
 #endif
