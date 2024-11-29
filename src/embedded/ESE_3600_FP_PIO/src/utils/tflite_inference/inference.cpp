@@ -87,19 +87,33 @@ void pollSetup()
 
 void pollLoop()
 {
-  unsigned long startTime = millis();
-  int duration = 5000;
-  while (millis() - startTime < duration) {
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&a, &g, &temp);
+    const int target_samples = 200;       // Number of samples to collect
+    const int sampling_interval_ms = 25; // Interval between samples (5000 ms / 200 samples = 25 ms)
 
-        // Add data to buffer
+    dataBuffer.clear(); // Clear the buffer before collecting new data
+
+    for (int i = 0; i < target_samples; ++i) {
+        // Fetch IMU data
+        sensors_event_t accel, gyro, temp;
+        mpu.getEvent(&accel, &gyro, &temp);
+
+        // Add data to the buffer (with quantization)
         addDataToBuffer(
-            millis() - startTime,
-            a.acceleration.x, a.acceleration.y, a.acceleration.z,
-            g.gyro.x, g.gyro.y, g.gyro.z
+            millis(),
+            accel.acceleration.x,
+            accel.acceleration.y,
+            accel.acceleration.z,
+            gyro.gyro.x,
+            gyro.gyro.y,
+            gyro.gyro.z
         );
-  }
+
+        // Wait for the next sampling interval
+        delay(sampling_interval_ms);
+    }
+
+    // Log a message indicating data collection is complete
+    error_reporter->Report("Data collection complete. Collected %d samples.", dataBuffer.size());
 }
 
 void runInference() {
