@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include "utils/data_collection.h"
-#include "utils/copy_files.h"
+#include "utils/data_ops/data_collection.h"
+#include "utils/data_ops/copy_files.h"
 #include "utils/tflite_inference/inference.h"
 
 extern const bool copy_files;
