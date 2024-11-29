@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include "buffer.h"
 
 // Constants for preprocessing

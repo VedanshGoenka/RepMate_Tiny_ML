@@ -3,6 +3,7 @@
 #include "esp_attr.h"
 #include <cstdint>
 #include <stdexcept>
+#include <cstring>
 
 // Buffer Size
 constexpr size_t BUFFER_LENGTH = 1500; // 7.5 seconds at 5 ms intervals

@@ -10,10 +10,6 @@ const bool force_reformat = !copy_files; // If true, the file system will be ref
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
 String current_lift = lift_names[1];
 
-// TFLite Inference Constants
-const int input_length = 200 * 6;
-const int output_length = 5;
-
 void setup()
 {
   if (copy_files)
@@ -26,7 +22,18 @@ void setup()
   }
   else if (run_inference)
   {
+    // Setup IMU
+    imuSetup();
+
+    // Setup TFLite
     setupModel(false);
+
+    // Prime the data buffer with ~5 seconds of data
+    for (int i = 0; i < 5000 / 250; ++i) // 5000 ms / 250 ms = 20 samples
+    {
+      imuCollect(dataBuffer);
+    }
+    printf("Prime complete\n");
   }
 }
 
@@ -42,18 +49,10 @@ void loop()
   }
   else if (run_inference)
   {
-    // // define input_data array to be of length input_length
-    // int8_t input_data[input_length];
-    // // define output_data array to be of length output_length
-    // int8_t output_data[output_length];
-    // for (int i = 0; i < 200; ++i) {
-    //   for (int j = 0; j < 6; ++j) {
-    //     input_data[i * 6 + j] = static_cast<int8_t>((i - j) / 10.0);
-    //   }
-    // }
+    // Collect data
+    imuCollect(dataBuffer);
 
-    // runInference(input_data, input_length, output_data, output_length);
-    printModelDetails(true);
-    delay(5000);
+    // Run inference
+    doInference();
   }
 }

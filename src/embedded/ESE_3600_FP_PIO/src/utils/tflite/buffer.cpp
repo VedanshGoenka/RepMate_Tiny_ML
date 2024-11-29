@@ -17,7 +17,7 @@ CircularBuffer<T>::~CircularBuffer()
   delete[] buffer;
 }
 
-// Define the push method for the circular buffer template class
+// Add a data point to the buffer
 template <typename T>
 void CircularBuffer<T>::push(const T &data)
 {
@@ -35,7 +35,7 @@ void CircularBuffer<T>::push(const T &data)
   }
 }
 
-// Define the get method for the circular buffer template class
+// Get a data point from the buffer
 template <typename T>
 T CircularBuffer<T>::get(size_t index) const
 {
@@ -47,7 +47,7 @@ T CircularBuffer<T>::get(size_t index) const
   return buffer[actual_index];
 }
 
-// Define the getData method for the circular buffer template class
+// Get the data from the buffer
 template <typename T>
 void CircularBuffer<T>::getData(float *output, size_t required_length) const
 {
@@ -69,21 +69,21 @@ void CircularBuffer<T>::getData(float *output, size_t required_length) const
   }
 }
 
-// Define the size method for the circular buffer template class
+// Get the number of elements in the buffer
 template <typename T>
 size_t CircularBuffer<T>::size() const
 {
   return count;
 }
 
-// Define the isFull method for the circular buffer template class
+// Check if the buffer is full
 template <typename T>
 bool CircularBuffer<T>::isFull() const
 {
   return count == BUFFER_LENGTH;
 }
 
-// Define the clear method for the circular buffer template class
+// Clear the buffer
 template <typename T>
 void CircularBuffer<T>::clear()
 {
@@ -96,15 +96,38 @@ void CircularBuffer<T>::clear()
 template <typename T>
 void CircularBuffer<T>::getRecent(size_t n, T *output) const
 {
+  // Input validation
   if (n > count)
   {
     throw std::runtime_error("Not enough data in buffer");
   }
+  if (n > BUFFER_LENGTH)
+  {
+    throw std::runtime_error("Requested more data than buffer size");
+  }
+  if (output == nullptr)
+  {
+    throw std::runtime_error("Output buffer is null");
+  }
 
-  size_t start = (head - n + BUFFER_LENGTH) % BUFFER_LENGTH;
+  // Calculate start position for copying
+  size_t start = (head >= n) ? (head - n) : (BUFFER_LENGTH - (n - head));
+
+  printf("Buffer stats - head: %zu, count: %zu, n: %zu, start: %zu\n",
+         head, count, n, start);
+
+  // Copy the most recent n elements with proper alignment handling
   for (size_t i = 0; i < n; i++)
   {
-    output[i] = buffer[(start + i) % BUFFER_LENGTH];
+    size_t buffer_index = (start + i) % BUFFER_LENGTH;
+
+    // Copy individual fields to maintain alignment
+    output[i].aX = buffer[buffer_index].aX;
+    output[i].aY = buffer[buffer_index].aY;
+    output[i].aZ = buffer[buffer_index].aZ;
+    output[i].gX = buffer[buffer_index].gX;
+    output[i].gY = buffer[buffer_index].gY;
+    output[i].gZ = buffer[buffer_index].gZ;
   }
 }
 

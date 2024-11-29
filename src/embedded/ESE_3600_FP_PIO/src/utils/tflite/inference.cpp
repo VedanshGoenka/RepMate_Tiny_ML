@@ -4,6 +4,9 @@
 const int label_count = 5;
 const char *labels[5] = {"l_i", "o_a", "p_f", "p_m", "s_w"};
 
+// Buffer to store IMU data
+CircularBuffer<TimeSeriesDataPoint> dataBuffer;
+
 // TensorFlow Lite globals
 namespace
 {
@@ -18,8 +21,6 @@ namespace
   // kTensor Area size was too small, was originally 10 x 1024, making it larger
   constexpr int kTensorArenaSize = 128 * 1024; // Adjust this as per the model's memory requirement
   uint8_t tensor_arena[kTensorArenaSize];
-
-  CircularBuffer<TimeSeriesDataPoint> dataBuffer; // Buffer to store IMU data
 }
 
 void setupModel(bool verbose = false)
@@ -51,71 +52,61 @@ void setupModel(bool verbose = false)
     return;
   }
 
+  // Check the model's inputs and outputs
+  if (interpreter->inputs().size() != 1)
+  {
+    TF_LITE_REPORT_ERROR(error_reporter, "Model expects 1 input tensor, but got %zu.", interpreter->inputs().size());
+    return;
+  }
+
+  // Check input dimensions
+  if (interpreter->input(0)->dims->data[1] != OUTPUT_SEQUENCE_LENGTH)
+  {
+    TF_LITE_REPORT_ERROR(error_reporter,
+                         "Input tensor expects %d samples, but got %d.",
+                         OUTPUT_SEQUENCE_LENGTH,
+                         interpreter->input(0)->dims->data[1]);
+    return;
+  }
+
+  if (interpreter->input(0)->dims->data[2] != NUM_FEATURES)
+  {
+    TF_LITE_REPORT_ERROR(error_reporter,
+                         "Input tensor expects %d features per sample, but got %d.",
+                         NUM_FEATURES,
+                         interpreter->input(0)->dims->data[2]);
+    return;
+  }
+
+  if (interpreter->output(0)->dims->data[1] != label_count)
+  {
+    TF_LITE_REPORT_ERROR(error_reporter, "Output tensor expects %d labels, but got %d.", label_count, interpreter->output(0)->dims->data[1]);
+    return;
+  }
+
   // Print model details if verbose mode is enabled
   printModelDetails(verbose);
 
   TF_LITE_REPORT_ERROR(error_reporter, "Model setup complete.");
 }
 
-void runInference(const int8_t *input_data, int input_length, int8_t *output_data, int output_length)
-{
-  // Ensure enough data is present to match the input tensor's shape
-  TfLiteTensor *input = interpreter->input(0);
-  const int num_samples = input->dims->data[1];         // Expected number of samples (e.g., 200)
-  const int features_per_sample = input->dims->data[2]; // Features per sample (e.g., 6)
-
-  for (int i = 0; i < num_samples; ++i)
-  {
-    input->data.f[i * features_per_sample + 0] = input_data[i * 6 + 0];
-    input->data.f[i * features_per_sample + 1] = input_data[i * 6 + 1];
-    input->data.f[i * features_per_sample + 2] = input_data[i * 6 + 2];
-    input->data.f[i * features_per_sample + 3] = input_data[i * 6 + 3];
-    input->data.f[i * features_per_sample + 4] = input_data[i * 6 + 4];
-    input->data.f[i * features_per_sample + 5] = input_data[i * 6 + 5];
-  }
-
-  // Run inference
-  if (interpreter->Invoke() != kTfLiteOk)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter, "Inference invocation failed.");
-    return;
-  }
-
-  // Get the output tensor and print the results
-  TfLiteTensor *output = interpreter->output(0);
-  printf("Inference output: ");
-  for (int i = 0; i < output->dims->data[1]; ++i)
-  { // Assuming output shape [1, 5]
-    printf("%f ", output->data.f[i]);
-  }
-  printf("\n");
-}
-
-void runInference()
+void doInference()
 {
   TfLiteTensor *input = interpreter->input(0);
-  const int num_samples = input->dims->data[1];         // Expected number of samples (e.g., 200)
-  const int features_per_sample = input->dims->data[2]; // Features per sample (e.g., 6)
 
-  if (dataBuffer.size() < num_samples)
+  if (dataBuffer.size() < GRAB_LEN)
   {
     TF_LITE_REPORT_ERROR(error_reporter,
                          "Insufficient data in buffer for inference. Need %d samples, but only have %d.",
-                         num_samples, dataBuffer.size());
+                         GRAB_LEN, dataBuffer.size());
     return;
   }
 
-  // // Copy data into the input tensor
-  // for (int i = 0; i < num_samples; ++i)
-  // {
-  //   const DataPoint &dp = dataBuffer[i];
-  //   input->data.f[i * features_per_sample + 0] = dp.accel_x;
-  //   input->data.f[i * features_per_sample + 1] = dp.accel_y;
-  //   input->data.f[i * features_per_sample + 2] = dp.accel_z;
-  //   input->data.f[i * features_per_sample + 3] = dp.gyro_x;
-  //   input->data.f[i * features_per_sample + 4] = dp.gyro_y;
-  //   input->data.f[i * features_per_sample + 5] = dp.gyro_z;
-  // }
+  printf("Preprocessing data\n");
+
+  preprocess_buffer_to_input(dataBuffer, input->data.int8);
+
+  printf("Invoking inference\n");
 
   // Run inference
   if (interpreter->Invoke() != kTfLiteOk)
@@ -123,6 +114,8 @@ void runInference()
     TF_LITE_REPORT_ERROR(error_reporter, "Inference invocation failed.");
     return;
   }
+
+  printf("Inference complete\n");
 
   // Get the output tensor and print the results
   TfLiteTensor *output = interpreter->output(0);

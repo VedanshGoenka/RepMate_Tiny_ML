@@ -5,6 +5,7 @@
 
 #include "model.h"
 #include "buffer.h"
+#include "pre_process.h"
 
 #include <TensorFlowLite_ESP32.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
@@ -20,12 +21,14 @@
 extern const int label_count;
 extern const char *labels[];
 
+// Buffer to store IMU data
+extern CircularBuffer<TimeSeriesDataPoint> dataBuffer;
+
 // Functions to initialize and run inference
 const char *getTfLiteTypeName(TfLiteType type);
 void printModelDetails(bool shouldPrint);
 void setupModel(bool verbose);
-void runInference(const int8_t *input_data, int input_length, int8_t *output_data, int output_length);
-void runInference();
+void doInference();
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
 
 #endif
