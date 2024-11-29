@@ -18,22 +18,20 @@
 
 struct DataPoint {
     unsigned long timestamp;
-    float accel_x;
-    float accel_y;
-    float accel_z;
-    float gyro_x;
-    float gyro_y;
-    float gyro_z;
+    int accel_x;
+    int accel_y;
+    int accel_z;
+    int gyro_x;
+    int gyro_y;
+    int gyro_z;
 };
-
-// extern std::vector<DataPoint> dataBuffer;
-// extern Adafruit_MPU6050 mpu;
 
 // Functions to initialize and run inference
 void setupModel();
-void runInference(const float* input_data, int input_length, float* output_data, int output_length);
-// void pollSetup();
-// void pollLoop();
+void runInference(const int8_t* input_data, int input_length, int8_t* output_data, int output_length);
+void runInference();
+void pollSetup();
+void pollLoop();
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
 
 #endif

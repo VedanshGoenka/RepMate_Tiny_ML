@@ -27,6 +27,7 @@ void setup()
   else if (run_inference)
   {
     setupModel();
+    pollSetup();
   }
 }
 
@@ -42,17 +43,19 @@ void loop()
   }
   else if (run_inference)
   {
-    // define input_data array to be of length input_length
-    float input_data[input_length];
-    // define output_data array to be of length output_length
-    float output_data[output_length];
-    for (int i = 0; i < 200; ++i) {
-      for (int j = 0; j < 6; ++j) {
-        input_data[i * 6 + j] = static_cast<float>((i + j) / 10.0);
-      }
-    }
+    // // define input_data array to be of length input_length
+    // int8_t input_data[input_length];
+    // // define output_data array to be of length output_length
+    // int8_t output_data[output_length];
+    // for (int i = 0; i < 200; ++i) {
+    //   for (int j = 0; j < 6; ++j) {
+    //     input_data[i * 6 + j] = static_cast<int8_t>((i - j) / 10.0);
+    //   }
+    // }
     
-    runInference(input_data, input_length, output_data, output_length);
+    // runInference(input_data, input_length, output_data, output_length);
+    pollLoop();
+    runInference();
     delay(5000);
   }
 }
