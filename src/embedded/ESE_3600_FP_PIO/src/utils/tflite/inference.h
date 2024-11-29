@@ -3,7 +3,7 @@
 #ifndef INFERENCE_H_
 #define INFERENCE_H_
 
-#include "inference_model_data.h"
+#include "model.h"
 
 #include <TensorFlowLite_ESP32.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
@@ -11,7 +11,7 @@
 #include <tensorflow/lite/micro/micro_interpreter.h>
 #include <tensorflow/lite/micro/system_setup.h>
 #include <tensorflow/lite/schema/schema_generated.h>
-#include <Adafruit_MPU6050.h>
+
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <vector>

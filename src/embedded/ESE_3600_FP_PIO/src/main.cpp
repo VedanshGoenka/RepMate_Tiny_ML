@@ -4,14 +4,14 @@
 const bool copy_files = false;           // If true, SD card sets formatting flags to NEVER format
 const bool collect_data = false;         // If true, data is collected and saved to the file system
 const bool run_inference = true;         // If true, inference is run on the data
-const bool force_reformat = !copy_files; // If true, the file system will be reformatted during setup
+const bool force_reformat = !copy_files; // If true, the file system will be reformatted during data collection setup
 
 // Data Collection Constants
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
 String current_lift = lift_names[1];
 
 // TFLite Inference Constants
-const int input_length = 200*6;
+const int input_length = 200 * 6;
 const int output_length = 5;
 
 void setup()
@@ -52,7 +52,7 @@ void loop()
     //     input_data[i * 6 + j] = static_cast<int8_t>((i - j) / 10.0);
     //   }
     // }
-    
+
     // runInference(input_data, input_length, output_data, output_length);
     pollLoop();
     runInference();

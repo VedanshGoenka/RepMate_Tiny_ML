@@ -14,7 +14,6 @@ namespace {
   uint8_t tensor_arena[kTensorArenaSize];
 
   std::vector<DataPoint> dataBuffer;
-  Adafruit_MPU6050 mpu;
 }
 
 void setupModel() {
@@ -72,50 +71,6 @@ void runInference(const int8_t* input_data, int input_length, int8_t* output_dat
   printf("\n");
 }
 
-void pollSetup()
-{
-  // Initialize MPU6050
-  while (!mpu.begin())
-  {
-    delay(500);
-  }
-
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-}
-
-void pollLoop()
-{
-    const int target_samples = 200;       // Number of samples to collect
-    const int sampling_interval_ms = 25; // Interval between samples (5000 ms / 200 samples = 25 ms)
-
-    dataBuffer.clear(); // Clear the buffer before collecting new data
-
-    for (int i = 0; i < target_samples; ++i) {
-        // Fetch IMU data
-        sensors_event_t accel, gyro, temp;
-        mpu.getEvent(&accel, &gyro, &temp);
-
-        // Add data to the buffer (with quantization)
-        addDataToBuffer(
-            millis(),
-            accel.acceleration.x,
-            accel.acceleration.y,
-            accel.acceleration.z,
-            gyro.gyro.x,
-            gyro.gyro.y,
-            gyro.gyro.z
-        );
-
-        // Wait for the next sampling interval
-        delay(sampling_interval_ms);
-    }
-
-    // Log a message indicating data collection is complete
-    error_reporter->Report("Data collection complete. Collected %d samples.", dataBuffer.size());
-}
-
 void runInference() {
   TfLiteTensor* input = interpreter->input(0);
   const int num_samples = input->dims->data[1]; // Expected number of samples (e.g., 200)
@@ -152,24 +107,3 @@ void runInference() {
   printf("\n");
 }
 
-void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz) {
-    // Use the quantization parameters from the input tensor
-    TfLiteTensor* input_tensor = interpreter->input(0);
-    float scale = input_tensor->params.scale;
-    int zero_point = input_tensor->params.zero_point;
-
-    // Quantize IMU data
-    int accel_x = static_cast<int>(round(ax / scale) + zero_point);
-    int accel_y = static_cast<int>(round(ay / scale) + zero_point);
-    int accel_z = static_cast<int>(round(az / scale) + zero_point);
-    int gyro_x = static_cast<int>(round(gx / scale) + zero_point);
-    int gyro_y = static_cast<int>(round(gy / scale) + zero_point);
-    int gyro_z = static_cast<int>(round(gz / scale) + zero_point);
-
-    // Create a DataPoint with quantized values and add to the buffer
-    DataPoint dp = {timestamp, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z};
-    if (dataBuffer.size() >= 200) {
-        dataBuffer.erase(dataBuffer.begin()); // Remove the oldest sample if the buffer is full
-    }
-    dataBuffer.push_back(dp);
-}
