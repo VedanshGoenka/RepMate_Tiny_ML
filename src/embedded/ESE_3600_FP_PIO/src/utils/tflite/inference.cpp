@@ -4,6 +4,8 @@
 const int label_count = 5;
 const char *labels[5] = {"l_i", "o_a", "p_f", "p_m", "s_w"};
 
+const bool DEBUG_OUTPUT = true;
+
 // Buffer to store IMU data
 CircularBuffer<TimeSeriesDataPoint> dataBuffer;
 
@@ -104,11 +106,17 @@ void doInference()
     return;
   }
 
-  printf("Preprocessing data\n");
+  if (DEBUG_OUTPUT)
+  {
+    printf("Preprocessing data\n");
+  }
 
   preprocess_buffer_to_input(dataBuffer, input->data.int8);
 
-  printf("Invoking inference\n");
+  if (DEBUG_OUTPUT)
+  {
+    printf("Invoking inference\n");
+  }
 
   // Run inference
   if (interpreter->Invoke() != kTfLiteOk)
@@ -117,25 +125,64 @@ void doInference()
     return;
   }
 
-  printf("Inference complete\n");
+  getInferenceResult();
+  if (DEBUG_OUTPUT)
+  {
+    printf("Inference complete\n");
+  }
+}
 
-  // Get the output tensor and print the results
+void getInferenceResult()
+{
   TfLiteTensor *output = interpreter->output(0);
-  printf("Inference output: ");
+  if (DEBUG_OUTPUT)
+  {
+    printf("Inference output: ");
+  }
+
   int max_index = 0;
-  float max_value = output->data.f[0];
-  for (int i = 0; i < output->dims->data[1]; ++i)
-  { // Assuming output shape [1, 5]
-    printf("%f ", output->data.f[i]);
-    if (output->data.f[i] > max_value)
+  int max_value = output->data.int8[0];
+
+  int output_values[label_count];
+
+  for (int i = 0; i < label_count; ++i)
+  {
+    output_values[i] = output->data.int8[i];
+    if (DEBUG_OUTPUT)
     {
-      max_value = output->data.f[i];
+      printf("%d ", output_values[i]);
+    }
+    if (output_values[i] > max_value)
+    {
+      max_value = output_values[i];
       max_index = i;
     }
   }
+
+  // Apply softmax to the output values
+  float softmax_values[label_count];
+  applySoftmax(output_values, max_index, label_count, softmax_values);
+
   printf("\n");
-  printf("Inference result: %s\n", labels[max_index]);
+  printf("Inference result: %s with confidence %.2f\n", labels[max_index], softmax_values[max_index]);
   printf("\n");
+}
+
+void applySoftmax(const int *output_values, int max_index, size_t label_count, float *softmax_values)
+{
+  int max_logit = output_values[max_index];
+  float sum = 0.0f;
+
+  for (int i = 0; i < label_count; i++)
+  {
+    softmax_values[i] = exp(output_values[i] - max_logit);
+    sum += softmax_values[i];
+  }
+
+  for (int i = 0; i < label_count; i++)
+  {
+    softmax_values[i] /= sum;
+  }
 }
 
 /////////////////////////
@@ -205,17 +252,21 @@ void printModelDetails(bool shouldPrint = false)
   printf("===================\n\n");
 }
 
-void setupOutputLights() {
+void setupOutputLights()
+{
   uint8_t pins[7] = {D0, D1, D2, D3, D6, D7, D8};
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < 7; i++)
+  {
     pinMode(pins[i], OUTPUT);
     digitalWrite(pins[i], LOW);
   }
 }
 
-void outputLights(int index) {
+void outputLights(int index)
+{
   uint8_t pins[7] = {D0, D1, D2, D3, D6, D7, D8};
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < 7; i++)
+  {
     digitalWrite(pins[i], LOW);
   }
   digitalWrite(pins[index], HIGH);

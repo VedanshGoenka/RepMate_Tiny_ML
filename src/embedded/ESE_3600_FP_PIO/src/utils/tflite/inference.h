@@ -29,6 +29,8 @@ const char *getTfLiteTypeName(TfLiteType type);
 void printModelDetails(bool shouldPrint);
 void setupModel(bool verbose);
 void doInference();
+void getInferenceResult();
+void applySoftmax(const int *output_values, int max_index, size_t label_count, float *softmax_values);
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
 void setupOutputLights();
 void outputLights(int index);

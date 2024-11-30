@@ -28,12 +28,12 @@ static bool init_buffers()
     feature_ranges = new (std::nothrow) float[2][2];
     if (!feature_ranges)
       return false;
-    
+
     // Initialize with opposite extremes so first comparison will work
-    feature_ranges[0][0] = FLT_MAX;    // accel min starts at max
-    feature_ranges[0][1] = -FLT_MAX;   // accel max starts at min
-    feature_ranges[1][0] = FLT_MAX;    // gyro min starts at max
-    feature_ranges[1][1] = -FLT_MAX;   // gyro max starts at min
+    feature_ranges[0][0] = FLT_MAX;  // accel min starts at max
+    feature_ranges[0][1] = -FLT_MAX; // accel max starts at min
+    feature_ranges[1][0] = FLT_MAX;  // gyro min starts at max
+    feature_ranges[1][1] = -FLT_MAX; // gyro max starts at min
   }
 
   return true;
@@ -77,7 +77,7 @@ static void window_avg_find_range(size_t feature_idx)
     sum += temp_buffer[feature_idx][j];
   }
   averaged_buffer[feature_idx][0] = sum / window_size;
-  
+
   feature_ranges[range_idx][0] = std::min<float>(feature_ranges[range_idx][0], averaged_buffer[feature_idx][0]);
   feature_ranges[range_idx][1] = std::max<float>(feature_ranges[range_idx][1], averaged_buffer[feature_idx][0]);
 
@@ -100,21 +100,21 @@ static void window_avg_find_range(size_t feature_idx)
 static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer)
 {
   bool is_gyro = feature_idx >= 3;
-  size_t range_idx = is_gyro ? 1 : 0;  // 0 for accel, 1 for gyro
-  
+  size_t range_idx = is_gyro ? 1 : 0; // 0 for accel, 1 for gyro
+
   float min_val = feature_ranges[range_idx][0];
   float max_val = feature_ranges[range_idx][1];
-  
+
   const float eps = 1e-7f;
   float range = std::max(max_val - min_val, eps);
-  
+
   for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
   {
     float normalized = (averaged_buffer[feature_idx][i] - min_val) / range;
-    
+
     float scaled = normalized * (OUTPUT_MAX - OUTPUT_MIN) + OUTPUT_MIN;
-    output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i] = 
-      static_cast<int8_t>(std::min<float>(std::max<float>(scaled, OUTPUT_MIN), OUTPUT_MAX));
+    output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i] =
+        static_cast<int8_t>(std::min<float>(std::max<float>(scaled, OUTPUT_MIN), OUTPUT_MAX));
   }
 }
 
@@ -168,7 +168,7 @@ void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffe
     normalize_and_quantize(feature, output_buffer);
   }
 
-  inspect_output_buffer(output_buffer);
+  // inspect_output_buffer(output_buffer);
 
   // Cleanup
   delete[] recent_data;
