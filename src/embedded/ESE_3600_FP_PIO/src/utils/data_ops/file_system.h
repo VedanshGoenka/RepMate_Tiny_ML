@@ -8,15 +8,8 @@
 
 extern const uint8_t pins[];
 
-// const std::map<uint8_t, String> lift_class_folder_map = {
-//     {pins[0], "p_f"},  // proper form
-//     {pins[1], "l_i"},  // lift instability
-//     {pins[2], "p_m"},  // partial motion
-//     {pins[3], "o_a"},  // off axis
-//     {pins[4], "s_w"}}; // swinging weight
-
 const std::map<uint8_t, String> lift_class_folder_map = {
-    {pins[0], "n_l"},  // no lift
+    {pins[0], "p_f"},  // proper form
     {pins[1], "l_i"},  // lift instability
     {pins[2], "p_m"},  // partial motion
     {pins[3], "o_a"},  // off axis

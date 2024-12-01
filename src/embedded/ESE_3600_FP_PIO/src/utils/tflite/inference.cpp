@@ -1,8 +1,8 @@
 #include "inference.h"
 
 // Define the label variables that were declared extern in the header
-const int label_count = 5;
-const char *labels[5] = {"l_i", "o_a", "p_f", "p_m", "s_w"};
+const int label_count = 6;
+const char *labels[label_count] = {"n_l", "l_i", "o_a", "p_f", "p_m", "s_w"};
 
 const bool DEBUG_OUTPUT = true;
 
