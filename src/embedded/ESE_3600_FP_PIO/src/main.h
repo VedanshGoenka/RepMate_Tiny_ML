@@ -6,6 +6,7 @@
 #include "utils/tflite/inference.h"
 #include "utils/tflite/imu_provider.h"
 #include "utils/hardware/ble.h"
+#include "utils/hardware/buzzer.h"
 
 // Setup Flags
 extern const bool copy_files;
