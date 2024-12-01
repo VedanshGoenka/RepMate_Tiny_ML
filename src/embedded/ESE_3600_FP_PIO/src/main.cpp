@@ -5,7 +5,7 @@ const bool copy_files = false;           // If true, SD card sets formatting fla
 const bool collect_data = false;         // If true, data is collected and saved to the file system
 const bool run_inference = true;         // If true, inference is run on the data
 const bool force_reformat = !copy_files; // If true, the file system will be reformatted during data collection setup
-const bool ble_enabled = false;          // If true, BLE is enabled
+const bool ble_enabled = true;          // If true, BLE is enabled
 
 // Data Collection Constants
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
