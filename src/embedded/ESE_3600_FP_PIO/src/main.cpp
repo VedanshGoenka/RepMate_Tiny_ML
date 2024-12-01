@@ -9,7 +9,7 @@ const bool ble_enabled = true;          // If true, BLE is enabled
 
 // Data Collection Constants
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
-String current_lift = lift_names[1];
+String current_lift = lift_names[0];
 
 void setup()
 {

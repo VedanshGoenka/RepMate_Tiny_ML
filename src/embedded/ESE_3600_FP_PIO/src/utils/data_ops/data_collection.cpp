@@ -10,8 +10,15 @@ const unsigned long sampling_rate = 1; // Note there is a +3 ms delay in the loo
 int high_pin_loops = 0;
 const int skip_high_pin_loops = 5; // Remove any sticky high pins for the first 100 loops
 
+// const std::map<int, String> lift_classification_map = {
+//     {pins[0], "p_f"},  // proper form
+//     {pins[1], "l_i"},  // lift instability
+//     {pins[2], "p_m"},  // partial motion
+//     {pins[3], "o_a"},  // off axis
+//     {pins[4], "s_w"}}; // swinging weight
+
 const std::map<int, String> lift_classification_map = {
-    {pins[0], "p_f"},  // proper form
+    {pins[0], "n_l"},  // no lift
     {pins[1], "l_i"},  // lift instability
     {pins[2], "p_m"},  // partial motion
     {pins[3], "o_a"},  // off axis
