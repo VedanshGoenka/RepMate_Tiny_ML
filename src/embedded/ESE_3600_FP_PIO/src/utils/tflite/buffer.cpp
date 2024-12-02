@@ -96,14 +96,22 @@ void CircularBuffer<T>::clear()
 template <typename T>
 void CircularBuffer<T>::getRecent(size_t n, T *output) const
 {
-  // Input validation
+  // Input validation with detailed error messages
   if (n > count)
   {
-    throw std::runtime_error("Not enough data in buffer");
+    char err[100];
+    snprintf(err, sizeof(err),
+             "Not enough data in buffer. Requested: %zu, Available: %zu",
+             n, count);
+    throw std::runtime_error(err);
   }
   if (n > BUFFER_LENGTH)
   {
-    throw std::runtime_error("Requested more data than buffer size");
+    char err[100];
+    snprintf(err, sizeof(err),
+             "Requested more data than buffer size. Requested: %zu, Max: %zu",
+             n, BUFFER_LENGTH);
+    throw std::runtime_error(err);
   }
   if (output == nullptr)
   {

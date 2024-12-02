@@ -96,40 +96,99 @@ void setupModel(bool verbose = false)
 
 void doInference()
 {
-  TfLiteTensor *input = interpreter->input(0);
+    TfLiteTensor *input = interpreter->input(0);
+    TfLiteTensor *output = interpreter->output(0);
+    
+    if (!input || !output) {
+        TF_LITE_REPORT_ERROR(error_reporter, "Failed to get input/output tensors");
+        return;
+    }
 
-  if (dataBuffer.size() < GRAB_LEN)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Insufficient data in buffer for inference. Need %d samples, but only have %d.",
-                         GRAB_LEN, dataBuffer.size());
-    return;
-  }
+    // Debug quantization parameters
+    if (DEBUG_OUTPUT) {
+        printf("Input quantization - scale: %f, zero_point: %d\n",
+               input->params.scale, input->params.zero_point);
+        printf("Output quantization - scale: %f, zero_point: %d\n",
+               output->params.scale, output->params.zero_point);
+    }
 
-  if (DEBUG_OUTPUT)
-  {
-    printf("Preprocessing data\n");
-  }
+    if (dataBuffer.size() < GRAB_LEN) {
+        TF_LITE_REPORT_ERROR(error_reporter,
+            "Insufficient data in buffer for inference. Need %d samples, have %zu",
+            GRAB_LEN, dataBuffer.size());
+        return;
+    }
 
-  preprocess_buffer_to_input(dataBuffer, input->data.int8);
+    try {
+        if (DEBUG_OUTPUT) {
+            printf("Preprocessing data\n");
+        }
 
-  if (DEBUG_OUTPUT)
-  {
-    printf("Invoking inference\n");
-  }
+        // Preprocess and quantize input
+        preprocess_buffer_to_input(dataBuffer, input->data.int8);
 
-  // Run inference
-  if (interpreter->Invoke() != kTfLiteOk)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter, "Inference invocation failed.");
-    return;
-  }
+        if (DEBUG_OUTPUT) {
+            printf("Invoking inference\n");
+        }
 
-  getInferenceResult();
-  if (DEBUG_OUTPUT)
-  {
-    printf("Inference complete\n");
-  }
+        // Run inference
+        unsigned long start_time = millis();
+        TfLiteStatus invoke_status = interpreter->Invoke();
+        unsigned long inference_time = millis() - start_time;
+
+        if (invoke_status != kTfLiteOk) {
+            TF_LITE_REPORT_ERROR(error_reporter, 
+                "Inference failed with status: %d", invoke_status);
+            return;
+        }
+
+        if (DEBUG_OUTPUT) {
+            printf("Inference completed in %lu ms\n", inference_time);
+            
+            // Print raw quantized output
+            printf("Raw logits: ");
+            for (int i = 0; i < 6; i++) {
+                printf("%d ", output->data.int8[i]);
+            }
+            printf("\n");
+
+            // Dequantize and compute softmax
+            float dequantized[6];
+            float softmax[6];
+            float sum = 0.0f;
+            
+            // Dequantize: (raw - zero_point) * scale
+            for (int i = 0; i < 6; i++) {
+                dequantized[i] = (output->data.int8[i] - output->params.zero_point) 
+                                * output->params.scale;
+                float exp_val = exp(dequantized[i]);
+                softmax[i] = exp_val;
+                sum += exp_val;
+            }
+
+            // Find max probability and corresponding class
+            int max_idx = 0;
+            float max_prob = 0.0f;
+
+            // Normalize softmax and find max
+            printf("Class probabilities:\n");
+            for (int i = 0; i < 6; i++) {
+                softmax[i] /= sum;
+                printf("%s: %.4f\n", labels[i], softmax[i]);
+                if (softmax[i] > max_prob) {
+                    max_prob = softmax[i];
+                    max_idx = i;
+                }
+            }
+
+            // Print final prediction
+            printf("\nPredicted class: %s (confidence: %.2f%%)\n", 
+                   labels[max_idx], max_prob * 100);
+        }
+    }
+    catch (const std::exception& e) {
+        TF_LITE_REPORT_ERROR(error_reporter, "Exception during inference: %s", e.what());
+    }
 }
 
 void getInferenceResult()
@@ -166,23 +225,43 @@ void getInferenceResult()
   printf("\n");
   printf("Inference result: %s with confidence %.2f\n", labels[max_index], softmax_values[max_index]);
   printf("\n");
+
+  if (DEBUG_OUTPUT)
+  {
+    printf("\nRaw logits: ");
+    for (int i = 0; i < label_count; ++i) {
+      printf("%d ", output_values[i]);
+    }
+    printf("\nSoftmax probabilities: ");
+    for (int i = 0; i < label_count; ++i) {
+      printf("%.4f ", softmax_values[i]);
+    }
+    printf("\n");
+  }
 }
 
 void applySoftmax(const int *output_values, int max_index, size_t label_count, float *softmax_values)
 {
-  int max_logit = output_values[max_index];
-  float sum = 0.0f;
+    // Convert to float and find maximum for numerical stability
+    float max_val = output_values[0];
+    for (int i = 0; i < label_count; i++) {
+        if (output_values[i] > max_val) {
+            max_val = output_values[i];
+        }
+    }
 
-  for (int i = 0; i < label_count; i++)
-  {
-    softmax_values[i] = exp(output_values[i] - max_logit);
-    sum += softmax_values[i];
-  }
+    // Calculate exp() for each value and sum
+    float sum = 0.0f;
+    for (int i = 0; i < label_count; i++) {
+        // Scale the values to prevent overflow/underflow
+        softmax_values[i] = exp((output_values[i] - max_val) / 128.0f);
+        sum += softmax_values[i];
+    }
 
-  for (int i = 0; i < label_count; i++)
-  {
-    softmax_values[i] /= sum;
-  }
+    // Normalize
+    for (int i = 0; i < label_count; i++) {
+        softmax_values[i] /= sum;
+    }
 }
 
 /////////////////////////

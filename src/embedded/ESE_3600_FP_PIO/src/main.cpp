@@ -1,9 +1,9 @@
 #include "main.h"
 
 // Setup  Flags
-const bool copy_files = true;           // If true, SD card sets formatting flags to NEVER format
+const bool copy_files = false;           // If true, SD card sets formatting flags to NEVER format
 const bool collect_data = false;         // If true, data is collected and saved to the file system
-const bool run_inference = false;         // If true, inference is run on the data
+const bool run_inference = true;         // If true, inference is run on the data
 const bool force_reformat = !copy_files; // If true, the file system will be reformatted during data collection setup
 const bool ble_enabled = false;          // If true, BLE is enabled
 

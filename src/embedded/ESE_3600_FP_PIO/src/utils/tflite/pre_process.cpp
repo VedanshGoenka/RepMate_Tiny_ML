@@ -9,34 +9,28 @@ static float (*feature_ranges)[2] = nullptr; // [0][0] = accel min, [0][1] = acc
 // Initialize buffers
 static bool init_buffers()
 {
-  if (!temp_buffer)
-  {
-    temp_buffer = new (std::nothrow) float[NUM_FEATURES][GRAB_LEN];
-    if (!temp_buffer)
-      return false;
-  }
-
-  if (!averaged_buffer)
-  {
-    averaged_buffer = new (std::nothrow) float[NUM_FEATURES][OUTPUT_SEQUENCE_LENGTH];
-    if (!averaged_buffer)
-      return false;
-  }
-
-  if (!feature_ranges)
-  {
-    feature_ranges = new (std::nothrow) float[2][2];
-    if (!feature_ranges)
-      return false;
-
-    // Initialize with opposite extremes so first comparison will work
-    feature_ranges[0][0] = FLT_MAX;  // accel min starts at max
-    feature_ranges[0][1] = -FLT_MAX; // accel max starts at min
-    feature_ranges[1][0] = FLT_MAX;  // gyro min starts at max
-    feature_ranges[1][1] = -FLT_MAX; // gyro max starts at min
-  }
-
-  return true;
+    try {
+        if (!temp_buffer) {
+            temp_buffer = new float[NUM_FEATURES][GRAB_LEN];
+        }
+        if (!averaged_buffer) {
+            averaged_buffer = new float[NUM_FEATURES][OUTPUT_SEQUENCE_LENGTH];
+        }
+        if (!feature_ranges) {
+            feature_ranges = new float[2][2];
+            // Initialize ranges
+            for (int i = 0; i < 2; i++) {
+                feature_ranges[i][0] = FLT_MAX;   // min
+                feature_ranges[i][1] = -FLT_MAX;  // max
+            }
+        }
+        return true;
+    }
+    catch (const std::bad_alloc& e) {
+        cleanup_buffers();
+        printf("Failed to allocate preprocessing buffers: %s\n", e.what());
+        return false;
+    }
 }
 
 // Cleanup buffers
@@ -94,28 +88,65 @@ static void window_avg_find_range(size_t feature_idx)
     feature_ranges[range_idx][0] = std::min<float>(feature_ranges[range_idx][0], averaged_buffer[feature_idx][i]);
     feature_ranges[range_idx][1] = std::max<float>(feature_ranges[range_idx][1], averaged_buffer[feature_idx][i]);
   }
+
+//   // Add debug output at the end
+//   printf("Feature %zu range: [%f, %f]\n", 
+//          feature_idx, 
+//          feature_ranges[range_idx][0], 
+//          feature_ranges[range_idx][1]);
 }
 
 // Normalizes and quantizes the averaged data to the output buffer
 static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer)
 {
-  bool is_gyro = feature_idx >= 3;
-  size_t range_idx = is_gyro ? 1 : 0; // 0 for accel, 1 for gyro
+    // Find min/max for this specific feature
+    float min_val = FLT_MAX;
+    float max_val = -FLT_MAX;
+    
+    for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++) {
+        float value = averaged_buffer[feature_idx][i];
+        min_val = std::min(min_val, value);
+        max_val = std::max(max_val, value);
+    }
 
-  float min_val = feature_ranges[range_idx][0];
-  float max_val = feature_ranges[range_idx][1];
+    // Print raw values for debugging
+    printf("Feature %zu raw values: ", feature_idx);
+    for (int i = 0; i < 5; i++) {
+        printf("%f ", averaged_buffer[feature_idx][i]);
+    }
+    printf("\n");
 
-  const float eps = 1e-7f;
-  float range = std::max(max_val - min_val, eps);
+    // First normalize to [0,1]
+    const float eps = 1e-7f;
+    float range = std::max(max_val - min_val, eps);
 
-  for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
-  {
-    float normalized = (averaged_buffer[feature_idx][i] - min_val) / range;
+    // Get quantization parameters from model
+    const float input_scale = 0.003921568859368563f;
+    const int input_zero_point = -128;
 
-    float scaled = normalized * (OUTPUT_MAX - OUTPUT_MIN) + OUTPUT_MIN;
-    output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i] =
-        static_cast<int8_t>(std::min<float>(std::max<float>(scaled, OUTPUT_MIN), OUTPUT_MAX));
-  }
+    for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
+    {
+        // First normalize to [0,1]
+        float value = averaged_buffer[feature_idx][i];
+        float normalized = (value - min_val) / range;
+        
+        // Apply model's quantization formula:
+        // quantized = data / input_scale + input_zero_point
+        float quantized = normalized / input_scale + input_zero_point;
+        
+        // Clamp to int8 range
+        quantized = std::min(std::max(quantized, -128.0f), 127.0f);
+        
+        output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i] = 
+            static_cast<int8_t>(std::round(quantized));
+    }
+
+    // Debug output
+    printf("Feature %zu quantized samples: ", feature_idx);
+    for (int i = 0; i < 5; i++) {
+        printf("%d ", output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i]);
+    }
+    printf("\n");
 }
 
 static void inspect_output_buffer(int8_t *output_buffer)
