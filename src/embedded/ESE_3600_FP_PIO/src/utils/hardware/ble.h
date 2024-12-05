@@ -4,16 +4,29 @@
 */
 
 #include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
 #include <Arduino.h>
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+// The remote service we wish to connect to.
+static BLEUUID serviceUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+// The characteristic of the remote service we are interested in.
+static BLEUUID charUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
-class MyCallbacks;
-void setupBLE();
-void broadcast(String message);
+extern boolean doConnect;
+extern boolean connected = false;
+extern boolean doScan = false;
+extern BLERemoteCharacteristic *pRemoteCharacteristic;
+extern BLEAdvertisedDevice *myDevice;
+
+void notifyCallback(
+  BLERemoteCharacteristic* pBLERemoteCharacteristic,
+  uint8_t* pData,
+  size_t length,
+  bool isNotify);
+bool connectToServer();
+class MyClientCallback;
+class MyAdvertisedDeviceCallbacks;
+void BLEsetup();
+void BLEloop(String message);

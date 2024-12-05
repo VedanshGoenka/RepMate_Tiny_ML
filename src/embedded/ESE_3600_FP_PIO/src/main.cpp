@@ -38,7 +38,7 @@ void setup()
   }
   if (ble_enabled)
   {
-    setupBLE();
+    BLEsetup();
   }
 }
 
@@ -62,7 +62,7 @@ void loop()
 
     if (ble_enabled)
     {
-      broadcast("TEST TEST TEST");
+      BLEloop("TEST TEST TEST!");
     }
   }
 }
