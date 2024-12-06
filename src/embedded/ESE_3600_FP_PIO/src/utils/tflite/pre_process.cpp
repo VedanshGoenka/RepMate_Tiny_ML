@@ -6,6 +6,14 @@ static float (*temp_buffer)[GRAB_LEN] = nullptr;
 static float (*averaged_buffer)[OUTPUT_SEQUENCE_LENGTH] = nullptr;
 static float (*feature_ranges)[2] = nullptr; // [0][0] = accel min, [0][1] = accel max, [1][0] = gyro min, [1][1] = gyro max
 
+
+static void hardcode_feature_ranges() {
+  feature_ranges[0][0] = -25.09375;
+  feature_ranges[0][1] = 30.8825;
+  feature_ranges[1][0] = -8.54875;
+  feature_ranges[1][1] = 7.995;
+}
+
 // Initialize buffers
 static bool init_buffers()
 {
@@ -192,6 +200,9 @@ void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffe
   {
     window_avg_find_range(feature);
   }
+
+  printf("Overriding Feature Ranges with hardcoded values\n");
+  hardcode_feature_ranges();
 
   printf("Normalizing and quantizing\n");
   for (size_t feature = 0; feature < NUM_FEATURES; feature++)
