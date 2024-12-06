@@ -105,7 +105,7 @@ void doInference()
     }
 
     // Debug quantization parameters
-    if (DEBUG_OUTPUT) {
+    if (DEBUG_OUTPUT && false) {
         printf("Input quantization - scale: %f, zero_point: %d\n",
                input->params.scale, input->params.zero_point);
         printf("Output quantization - scale: %f, zero_point: %d\n",
@@ -184,6 +184,8 @@ void doInference()
             // Print final prediction
             printf("\nPredicted class: %s (confidence: %.2f%%)\n", 
                    labels[max_idx], max_prob * 100);
+
+            printf("----------------------------------\n");
         }
     }
     catch (const std::exception& e) {

@@ -110,11 +110,11 @@ static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer)
     }
 
     // Print raw values for debugging
-    printf("Feature %zu raw values: ", feature_idx);
-    for (int i = 0; i < 5; i++) {
-        printf("%f ", averaged_buffer[feature_idx][i]);
-    }
-    printf("\n");
+    // printf("Feature %zu raw values: ", feature_idx);
+    // for (int i = 0; i < 5; i++) {
+    //     printf("%f ", averaged_buffer[feature_idx][i]);
+    // }
+    // printf("\n");
 
     // First normalize to [0,1]
     const float eps = 1e-7f;
@@ -141,12 +141,12 @@ static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer)
             static_cast<int8_t>(std::round(quantized));
     }
 
-    // Debug output
-    printf("Feature %zu quantized samples: ", feature_idx);
-    for (int i = 0; i < 5; i++) {
-        printf("%d ", output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i]);
-    }
-    printf("\n");
+    // // Debug output
+    // printf("Feature %zu quantized samples: ", feature_idx);
+    // for (int i = 0; i < 5; i++) {
+    //     printf("%d ", output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i]);
+    // }
+    // printf("\n");
 }
 
 static void inspect_output_buffer(int8_t *output_buffer)
