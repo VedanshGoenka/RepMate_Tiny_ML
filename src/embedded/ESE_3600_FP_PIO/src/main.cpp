@@ -62,8 +62,8 @@ void loop()
 
     if (ble_enabled)
     {
-      Serial.println("BLE loop");
-      BLEloop("TEST TEST TEST!");
+      printf("BLE loop\n\n");
+      BLEloop("Lift was classified as: No Lift");
     }
   }
 }
