@@ -35,10 +35,10 @@ void setup()
       imuCollect(dataBuffer);
     }
     printf("Prime complete\n");
-  }
-  if (ble_enabled)
-  {
-    BLEsetup();
+    if (ble_enabled)
+    {
+      BLEsetup();
+    }
   }
 }
 
@@ -62,6 +62,7 @@ void loop()
 
     if (ble_enabled)
     {
+      Serial.println("BLE loop");
       BLEloop("TEST TEST TEST!");
     }
   }

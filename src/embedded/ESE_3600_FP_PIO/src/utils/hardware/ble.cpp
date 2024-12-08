@@ -1,6 +1,12 @@
 #include "ble.h"
 #include <string>
 
+BLEAdvertisedDevice *myDevice = nullptr;
+BLERemoteCharacteristic *pRemoteCharacteristic = nullptr;
+bool doConnect = false;
+bool connected = false;
+bool doScan = false;
+
 static void notifyCallback(BLERemoteCharacteristic *pBLERemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
   Serial.print("Notify callback for characteristic ");
   Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
