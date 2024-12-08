@@ -44,12 +44,12 @@ void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
 void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ)
 {
   TimeSeriesDataPoint dataPoint = {
-      .aX = static_cast<float>(aX),
-      .aY = static_cast<float>(aY),
-      .aZ = static_cast<float>(aZ),
-      .gX = static_cast<float>(gX),
-      .gY = static_cast<float>(gY),
-      .gZ = static_cast<float>(gZ)};
+      .aX = aX,
+      .aY = aY,
+      .aZ = aZ,
+      .gX = gX,
+      .gY = gY,
+      .gZ = gZ};
 
   // Add to circular buffer
   buffer.push(dataPoint);

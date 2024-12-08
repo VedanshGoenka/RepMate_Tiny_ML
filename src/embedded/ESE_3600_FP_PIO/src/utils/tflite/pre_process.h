@@ -15,8 +15,8 @@ static void cleanup_buffers();
 
 static void copy_to_temp_buffer(const TimeSeriesDataPoint *recent_data);
 
-static void window_avg_find_range(size_t feature_idx);
+static void window_avg(size_t feature_idx);
 
-static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer);
+static void normalize(size_t feature_idx, float *output_buffer);
 
-void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffer, int8_t *output_buffer);
+void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffer, float *output_buffer);

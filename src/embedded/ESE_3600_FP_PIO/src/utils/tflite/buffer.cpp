@@ -4,7 +4,14 @@
 template <typename T>
 CircularBuffer<T>::CircularBuffer()
 {
-  buffer = new T[BUFFER_LENGTH];
+  if (psramFound())
+  {
+    buffer = (T *)ps_malloc(BUFFER_LENGTH * sizeof(T));
+  }
+  else
+  {
+    buffer = new T[BUFFER_LENGTH];
+  }
   head = 0;
   tail = 0;
   count = 0;

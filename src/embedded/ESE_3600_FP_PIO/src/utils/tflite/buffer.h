@@ -4,9 +4,10 @@
 #include <cstdint>
 #include <stdexcept>
 #include <cstring>
+#include <esp32-hal-psram.h>
 
 // Buffer Size
-constexpr size_t BUFFER_LENGTH = 1100; // 7.5 seconds at 5 ms intervals
+constexpr size_t BUFFER_LENGTH = 1100;
 constexpr size_t NUM_FEATURES = 6;
 
 // Define the data point structure

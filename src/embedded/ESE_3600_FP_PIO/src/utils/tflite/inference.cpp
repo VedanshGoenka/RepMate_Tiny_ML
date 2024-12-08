@@ -1,10 +1,11 @@
 #include "inference.h"
+#include "debug.h"
 
 // Define the label variables that were declared extern in the header
 const int label_count = 6;
 const char *labels[label_count] = {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"};
 
-const bool DEBUG_OUTPUT = true;
+const bool DEBUG_OUTPUT = false;
 
 // Buffer to store IMU data
 CircularBuffer<TimeSeriesDataPoint> dataBuffer;
@@ -15,14 +16,10 @@ namespace
   tflite::ErrorReporter *error_reporter = nullptr;
   const tflite::Model *model = nullptr;
   tflite::MicroInterpreter *interpreter = nullptr;
-
-  // All Ops Resolver
   tflite::AllOpsResolver resolver;
-
-  // Define memory for input, output, and intermediate tensors
-  // kTensor Area size was too small, was originally 10 x 1024, making it larger
-  constexpr int kTensorArenaSize = 128 * 1024; // Adjust this as per the model's memory requirement
-  uint8_t tensor_arena[kTensorArenaSize];
+  constexpr int kTensorArenaSize = 128 * 1024;
+  static uint8_t* tensor_arena = nullptr;
+  static uint8_t* model_buffer = nullptr;
 }
 
 void setupModel(bool verbose = false)
@@ -31,15 +28,43 @@ void setupModel(bool verbose = false)
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
 
-  // Map the model
-  model = tflite::GetModel(g_rep_mate_model_data);
-  if (model->version() != TFLITE_SCHEMA_VERSION)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Model provided is schema version %d not equal "
-                         "to supported version %d.",
-                         model->version(), TFLITE_SCHEMA_VERSION);
-    return;
+  // Load model into PSRAM
+  if (!model) {
+    if (!psramFound()) {
+      TF_LITE_REPORT_ERROR(error_reporter, "PSRAM not found!");
+      return;
+    }
+    
+    size_t model_size = g_rep_mate_model_data_len;
+    TF_LITE_REPORT_ERROR(error_reporter, "Model size: %d bytes", (int)model_size);
+    
+    // Debug model data
+    // inspectModelData(g_rep_mate_model_data, model_size);
+    
+    model_buffer = (uint8_t*)ps_malloc(model_size);
+    if (!model_buffer) {
+      TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate model buffer!");
+      return;
+    }
+
+    memcpy(model_buffer, g_rep_mate_model_data, model_size);
+    model = tflite::GetModel(model_buffer);
+    
+    if (!model) {
+      TF_LITE_REPORT_ERROR(error_reporter, "Failed to get model from buffer");
+      return;
+    }
+
+    // inspectModel(model, error_reporter);
+  }
+
+  // Allocate tensor arena
+  if (!tensor_arena) {
+    tensor_arena = (uint8_t*)ps_malloc(kTensorArenaSize);
+    if (!tensor_arena) {
+      TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate tensor arena!");
+      return;
+    }
   }
 
   // Set up the interpreter
@@ -47,223 +72,128 @@ void setupModel(bool verbose = false)
       model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
 
-  // Allocate memory for the model's tensors
-  if (interpreter->AllocateTensors() != kTfLiteOk)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate tensors.");
+  // Allocate tensors
+  if (interpreter->AllocateTensors() != kTfLiteOk) {
+    TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate tensors!");
     return;
   }
 
-  // Check the model's inputs and outputs
-  if (interpreter->inputs().size() != 1)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter, "Model expects 1 input tensor, but got %zu.", interpreter->inputs().size());
-    return;
-  }
+  // Debug tensor details
+  // inspectTensorDetails(interpreter, error_reporter);
 
-  // Check input dimensions
-  if (interpreter->input(0)->dims->data[1] != OUTPUT_SEQUENCE_LENGTH)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Input tensor expects %d samples, but got %d.",
-                         OUTPUT_SEQUENCE_LENGTH,
-                         interpreter->input(0)->dims->data[1]);
-    return;
-  }
-
-  if (interpreter->input(0)->dims->data[2] != NUM_FEATURES)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Input tensor expects %d features per sample, but got %d.",
-                         NUM_FEATURES,
-                         interpreter->input(0)->dims->data[2]);
-    return;
-  }
-
-  if (interpreter->output(0)->dims->data[1] != label_count)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter, "Output tensor expects %d labels, but got %d.", label_count, interpreter->output(0)->dims->data[1]);
-    return;
-  }
-
-  // Print model details if verbose mode is enabled
-  printModelDetails(verbose);
-
-  TF_LITE_REPORT_ERROR(error_reporter, "Model setup complete.");
-
+  TF_LITE_REPORT_ERROR(error_reporter, "Model setup complete");
   setupOutputLights();
 }
 
 void doInference()
 {
-    TfLiteTensor *input = interpreter->input(0);
-    TfLiteTensor *output = interpreter->output(0);
-    
-    if (!input || !output) {
-        TF_LITE_REPORT_ERROR(error_reporter, "Failed to get input/output tensors");
-        return;
+  TfLiteTensor *input = interpreter->input(0);
+  
+  if (!input) {
+    TF_LITE_REPORT_ERROR(error_reporter, "Failed to get input tensor");
+    return;
+  }
+
+  // Verify input shape
+  // inspectInputShape(input, error_reporter);
+
+  try {
+    // Preprocess data
+    preprocess_buffer_to_input(dataBuffer, input->data.f);
+
+    // Show input statistics
+    if (DEBUG_OUTPUT) {
+      inspectInputStats(input);
     }
 
-    // Debug quantization parameters
-    if (DEBUG_OUTPUT && false) {
-        printf("Input quantization - scale: %f, zero_point: %d\n",
-               input->params.scale, input->params.zero_point);
-        printf("Output quantization - scale: %f, zero_point: %d\n",
-               output->params.scale, output->params.zero_point);
+    // Run inference
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {
+      TF_LITE_REPORT_ERROR(error_reporter, "Invoke failed");
+      return;
     }
 
-    if (dataBuffer.size() < GRAB_LEN) {
-        TF_LITE_REPORT_ERROR(error_reporter,
-            "Insufficient data in buffer for inference. Need %d samples, have %zu",
-            GRAB_LEN, dataBuffer.size());
-        return;
+    // Show output details
+    TfLiteTensor* output = interpreter->output(0);
+    if (DEBUG_OUTPUT && output) {
+      inspectOutputValues(output, labels, label_count);
     }
 
-    try {
-        if (DEBUG_OUTPUT) {
-            printf("Preprocessing data\n");
-        }
-
-        // Preprocess and quantize input
-        preprocess_buffer_to_input(dataBuffer, input->data.int8);
-
-        if (DEBUG_OUTPUT) {
-            printf("Invoking inference\n");
-        }
-
-        // Run inference
-        unsigned long start_time = millis();
-        TfLiteStatus invoke_status = interpreter->Invoke();
-        unsigned long inference_time = millis() - start_time;
-
-        if (invoke_status != kTfLiteOk) {
-            TF_LITE_REPORT_ERROR(error_reporter, 
-                "Inference failed with status: %d", invoke_status);
-            return;
-        }
-
-        if (DEBUG_OUTPUT) {
-            printf("Inference completed in %lu ms\n", inference_time);
-            
-            // Print raw quantized output
-            printf("Raw logits: ");
-            for (int i = 0; i < 6; i++) {
-                printf("%d ", output->data.int8[i]);
-            }
-            printf("\n");
-
-            // Dequantize and compute softmax
-            float dequantized[6];
-            float softmax[6];
-            float sum = 0.0f;
-            
-            // Dequantize: (raw - zero_point) * scale
-            for (int i = 0; i < 6; i++) {
-                dequantized[i] = (output->data.int8[i] - output->params.zero_point) 
-                                * output->params.scale;
-                float exp_val = exp(dequantized[i]);
-                softmax[i] = exp_val;
-                sum += exp_val;
-            }
-
-            // Find max probability and corresponding class
-            int max_idx = 0;
-            float max_prob = 0.0f;
-
-            // Normalize softmax and find max
-            printf("Class probabilities:\n");
-            for (int i = 0; i < 6; i++) {
-                softmax[i] /= sum;
-                printf("%s: %.4f\n", labels[i], softmax[i]);
-                if (softmax[i] > max_prob) {
-                    max_prob = softmax[i];
-                    max_idx = i;
-                }
-            }
-
-            // Print final prediction
-            printf("\nPredicted class: %s (confidence: %.2f%%)\n", 
-                   labels[max_idx], max_prob * 100);
-
-            printf("----------------------------------\n");
-        }
-    }
-    catch (const std::exception& e) {
-        TF_LITE_REPORT_ERROR(error_reporter, "Exception during inference: %s", e.what());
-    }
+    // Get inference result
+    getInferenceResult();
+  }
+  catch (const std::exception& e) {
+    TF_LITE_REPORT_ERROR(error_reporter, "Exception: %s", e.what());
+  }
 }
 
 void getInferenceResult()
 {
   TfLiteTensor *output = interpreter->output(0);
+
   if (DEBUG_OUTPUT)
   {
-    printf("Inference output: ");
+    printf("Raw logits: ");
+    for (int i = 0; i < label_count; ++i)
+    {
+      printf("%f ", output->data.f[i]);
+    }
+    printf("\n");
   }
 
+  float softmax_values[label_count];
+  applySoftmax(output->data.f, -1, label_count, softmax_values);
+
+  // Find the maximum probability and its index
   int max_index = 0;
-  int max_value = output->data.int8[0];
-
-  int output_values[label_count];
-
-  for (int i = 0; i < label_count; ++i)
+  float max_prob = softmax_values[0];
+  for (int i = 1; i < label_count; ++i)
   {
-    output_values[i] = output->data.int8[i];
-    if (DEBUG_OUTPUT)
+    if (softmax_values[i] > max_prob)
     {
-      printf("%d ", output_values[i]);
-    }
-    if (output_values[i] > max_value)
-    {
-      max_value = output_values[i];
+      max_prob = softmax_values[i];
       max_index = i;
     }
   }
 
-  // Apply softmax to the output values
-  float softmax_values[label_count];
-  applySoftmax(output_values, max_index, label_count, softmax_values);
-
-  printf("\n");
-  printf("Inference result: %s with confidence %.2f\n", labels[max_index], softmax_values[max_index]);
-  printf("\n");
+  printf("\nInference result: %s with confidence %.2f\n", labels[max_index], max_prob * 100);
 
   if (DEBUG_OUTPUT)
   {
-    printf("\nRaw logits: ");
-    for (int i = 0; i < label_count; ++i) {
-      printf("%d ", output_values[i]);
-    }
-    printf("\nSoftmax probabilities: ");
-    for (int i = 0; i < label_count; ++i) {
+    printf("Softmax probabilities: ");
+    for (int i = 0; i < label_count; ++i)
+    {
       printf("%.4f ", softmax_values[i]);
     }
     printf("\n");
   }
 }
 
-void applySoftmax(const int *output_values, int max_index, size_t label_count, float *softmax_values)
+void applySoftmax(const float *output_values, int max_index, size_t label_count, float *softmax_values)
 {
-    // Convert to float and find maximum for numerical stability
-    float max_val = output_values[0];
-    for (int i = 0; i < label_count; i++) {
-        if (output_values[i] > max_val) {
-            max_val = output_values[i];
-        }
+  // Convert to float and find maximum for numerical stability
+  float max_val = output_values[0];
+  for (int i = 0; i < label_count; i++)
+  {
+    if (output_values[i] > max_val)
+    {
+      max_val = output_values[i];
     }
+  }
 
-    // Calculate exp() for each value and sum
-    float sum = 0.0f;
-    for (int i = 0; i < label_count; i++) {
-        // Scale the values to prevent overflow/underflow
-        softmax_values[i] = exp((output_values[i] - max_val) / 128.0f);
-        sum += softmax_values[i];
-    }
+  // Calculate exp() for each value and sum
+  float sum = 0.0f;
+  for (int i = 0; i < label_count; i++)
+  {
+    softmax_values[i] = exp(output_values[i] - max_val);
+    sum += softmax_values[i];
+  }
 
-    // Normalize
-    for (int i = 0; i < label_count; i++) {
-        softmax_values[i] /= sum;
-    }
+  // Normalize
+  for (int i = 0; i < label_count; i++)
+  {
+    softmax_values[i] /= sum;
+  }
 }
 
 /////////////////////////
