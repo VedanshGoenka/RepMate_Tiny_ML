@@ -85,10 +85,23 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
 
+    if (advertisedDevice.haveName() && advertisedDevice.getName() == "RepMate") {
+      Serial.println("Found the correct device by name!");
+      BLEDevice::getScan()->stop();
+      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+      doConnect = true;
+    }
+
+    if (advertisedDevice.haveServiceUUID()) {
+        Serial.print("Advertised service UUID: ");
+        Serial.println(advertisedDevice.getServiceUUID().toString().c_str());
+    }
+    
     // We have found a device, let us now see if it contains the service we are looking for.
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
 
       BLEDevice::getScan()->stop();
+      Serial.println("Target service UUID found!");
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = true;
@@ -128,7 +141,7 @@ void BLEloop(String message) {
   // If we are connected to a peer BLE Server, update the characteristic each time we are reached
   // with the current time since boot.
   if (connected) {
-    Serial.println("Setting new characteristic value to \"" + message + "\"");
+    Serial.println("Setting Lift History to: \"" + message + "\"");
 
     // Set the characteristic's value to be the array of bytes that is actually a string.
     pRemoteCharacteristic->writeValue(message.c_str(), message.length());
