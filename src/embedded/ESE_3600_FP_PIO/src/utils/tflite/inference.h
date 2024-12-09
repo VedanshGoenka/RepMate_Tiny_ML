@@ -21,18 +21,27 @@
 extern const int label_count;
 extern const char *labels[];
 
+// Debug control
+extern const bool DEBUG_OUTPUT;
+
 // Buffer to store IMU data
 extern CircularBuffer<TimeSeriesDataPoint> dataBuffer;
 
-// Functions to initialize and run inference
-const char *getTfLiteTypeName(TfLiteType type);
-void printModelDetails(bool shouldPrint);
+// Core inference functions
 void setupModel(bool verbose);
 void doInference();
 void getInferenceResult();
-void applySoftmax(const int *output_values, int max_index, size_t label_count, float *softmax_values);
+
+// Data processing functions
 void addDataToBuffer(unsigned long timestamp, float ax, float ay, float az, float gx, float gy, float gz);
+void applySoftmax(const float *output_values, size_t label_count, float *softmax_values);
+
+// Output and visualization functions
 void setupOutputLights();
 void outputLights(int index);
+
+// Debug and utility functions
+const char *getTfLiteTypeName(TfLiteType type);
+void printModelDetails(bool shouldPrint);
 
 #endif

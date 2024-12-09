@@ -119,7 +119,7 @@ void CircularBuffer<T>::getRecent(size_t n, T *output) const
   }
 
   // Calculate start position for copying
-  size_t start = (head >= n) ? (head - n) : (BUFFER_LENGTH - (n - head));
+  size_t start = (head + BUFFER_LENGTH - n) % BUFFER_LENGTH;
 
   // printf("Buffer stats - head: %zu, count: %zu, n: %zu, start: %zu\n",
   //        head, count, n, start);

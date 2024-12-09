@@ -1,220 +1,117 @@
 #include "pre_process.h"
 #include <float.h>
 
-// Buffer pointers instead of static arrays
-static float (*temp_buffer)[GRAB_LEN] = nullptr;
-static float (*averaged_buffer)[OUTPUT_SEQUENCE_LENGTH] = nullptr;
-static float (*feature_ranges)[2] = nullptr; // [0][0] = accel min, [0][1] = accel max, [1][0] = gyro min, [1][1] = gyro max
-
-
-static void hardcode_feature_ranges() {
-  feature_ranges[0][0] = -25.09375;
-  feature_ranges[0][1] = 30.8825;
-  feature_ranges[1][0] = -8.54875;
-  feature_ranges[1][1] = 7.995;
-}
-
-// Initialize buffers
-static bool init_buffers()
-{
-    try {
-        if (!temp_buffer) {
-            temp_buffer = new float[NUM_FEATURES][GRAB_LEN];
-        }
-        if (!averaged_buffer) {
-            averaged_buffer = new float[NUM_FEATURES][OUTPUT_SEQUENCE_LENGTH];
-        }
-        if (!feature_ranges) {
-            feature_ranges = new float[2][2];
-            // Initialize ranges
-            for (int i = 0; i < 2; i++) {
-                feature_ranges[i][0] = FLT_MAX;   // min
-                feature_ranges[i][1] = -FLT_MAX;  // max
-            }
-        }
-        return true;
-    }
-    catch (const std::bad_alloc& e) {
-        cleanup_buffers();
-        printf("Failed to allocate preprocessing buffers: %s\n", e.what());
-        return false;
-    }
-}
-
-// Cleanup buffers
-static void cleanup_buffers()
-{
-  delete[] temp_buffer;
-  delete[] averaged_buffer;
-  delete[] feature_ranges;
-  temp_buffer = nullptr;
-  averaged_buffer = nullptr;
-  feature_ranges = nullptr;
-}
-
-// Copies sensor data to the temporary buffer
-static void copy_to_temp_buffer(const TimeSeriesDataPoint *recent_data)
-{
-  for (size_t i = 0; i < GRAB_LEN; i++)
-  {
-    temp_buffer[0][i] = recent_data[i].aX;
-    temp_buffer[1][i] = recent_data[i].aY;
-    temp_buffer[2][i] = recent_data[i].aZ;
-    temp_buffer[3][i] = recent_data[i].gX;
-    temp_buffer[4][i] = recent_data[i].gY;
-    temp_buffer[5][i] = recent_data[i].gZ;
-  }
-}
-
 // Applies a moving average to the sensor data and tracks the range to feature_ranges
-static void window_avg_find_range(size_t feature_idx)
+static void window_avg(TimeSeriesDataPoint *recent_data, float *input_tensor_arr)
 {
   const size_t window_size = AVERAGING_WINDOW;
-  bool is_gyro = feature_idx >= 3;
-  size_t range_idx = is_gyro ? 1 : 0;
 
-  float sum = 0;
-  for (size_t j = 0; j < window_size && j < GRAB_LEN; j++)
+  // Validate buffer size
+  if (OUTPUT_SEQUENCE_LENGTH * window_size > GRAB_LEN)
   {
-    sum += temp_buffer[feature_idx][j];
-  }
-  averaged_buffer[feature_idx][0] = sum / window_size;
-
-  feature_ranges[range_idx][0] = std::min<float>(feature_ranges[range_idx][0], averaged_buffer[feature_idx][0]);
-  feature_ranges[range_idx][1] = std::max<float>(feature_ranges[range_idx][1], averaged_buffer[feature_idx][0]);
-
-  for (size_t i = 1; i < OUTPUT_SEQUENCE_LENGTH; i++)
-  {
-    sum = 0;
-    for (size_t j = 0; j < window_size; j++)
-    {
-      size_t idx = i * window_size + j;
-      sum += temp_buffer[feature_idx][idx];
-    }
-    averaged_buffer[feature_idx][i] = sum / window_size;
-
-    feature_ranges[range_idx][0] = std::min<float>(feature_ranges[range_idx][0], averaged_buffer[feature_idx][i]);
-    feature_ranges[range_idx][1] = std::max<float>(feature_ranges[range_idx][1], averaged_buffer[feature_idx][i]);
+    printf("Error: Required buffer size (%zu) exceeds GRAB_LEN (%zu)\n",
+           OUTPUT_SEQUENCE_LENGTH * window_size, GRAB_LEN);
+    return;
   }
 
-//   // Add debug output at the end
-//   printf("Feature %zu range: [%f, %f]\n", 
-//          feature_idx, 
-//          feature_ranges[range_idx][0], 
-//          feature_ranges[range_idx][1]);
-}
-
-// Normalizes and quantizes the averaged data to the output buffer
-static void normalize_and_quantize(size_t feature_idx, int8_t *output_buffer)
-{
-    // Find min/max for this specific feature
-    float min_val = FLT_MAX;
-    float max_val = -FLT_MAX;
-    
-    for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++) {
-        float value = averaged_buffer[feature_idx][i];
-        min_val = std::min(min_val, value);
-        max_val = std::max(max_val, value);
-    }
-
-    // Print raw values for debugging
-    // printf("Feature %zu raw values: ", feature_idx);
-    // for (int i = 0; i < 5; i++) {
-    //     printf("%f ", averaged_buffer[feature_idx][i]);
-    // }
-    // printf("\n");
-
-    // First normalize to [0,1]
-    const float eps = 1e-7f;
-    float range = std::max(max_val - min_val, eps);
-
-    // Get quantization parameters from model
-    const float input_scale = 0.003921568859368563f;
-    const int input_zero_point = -128;
-
-    for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
+  // Process each time step
+  for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
+  {
+    // For each time step, compute averages for all features
+    for (size_t feature = 0; feature < NUM_FEATURES; feature++)
     {
-        // First normalize to [0,1]
-        float value = averaged_buffer[feature_idx][i];
-        float normalized = (value - min_val) / range;
-        
-        // Apply model's quantization formula:
-        // quantized = data / input_scale + input_zero_point
-        float quantized = normalized / input_scale + input_zero_point;
-        
-        // Clamp to int8 range
-        quantized = std::min(std::max(quantized, -128.0f), 127.0f);
-        
-        output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i] = 
-            static_cast<int8_t>(std::round(quantized));
+      float sum = 0;
+      for (size_t j = 0; j < window_size; j++)
+      {
+        float value;
+        switch (feature)
+        {
+        case 0:
+          value = recent_data[i * window_size + j].aX;
+          break;
+        case 1:
+          value = recent_data[i * window_size + j].aY;
+          break;
+        case 2:
+          value = recent_data[i * window_size + j].aZ;
+          break;
+        case 3:
+          value = recent_data[i * window_size + j].gX;
+          break;
+        case 4:
+          value = recent_data[i * window_size + j].gY;
+          break;
+        case 5:
+          value = recent_data[i * window_size + j].gZ;
+          break;
+        default:
+          throw std::runtime_error("Invalid feature index");
+        }
+        sum += value;
+      }
+      // Store in interleaved format: (sample_idx * NUM_FEATURES + feature_idx)
+      input_tensor_arr[i * NUM_FEATURES + feature] = sum / window_size;
     }
-
-    // // Debug output
-    // printf("Feature %zu quantized samples: ", feature_idx);
-    // for (int i = 0; i < 5; i++) {
-    //     printf("%d ", output_buffer[feature_idx * OUTPUT_SEQUENCE_LENGTH + i]);
-    // }
-    // printf("\n");
+  }
 }
 
-static void inspect_output_buffer(int8_t *output_buffer)
+static void inspect_output_buffer(float *input_tensor_arr)
 {
   printf("Output buffer: ");
   for (size_t i = 0; i < NUM_FEATURES * OUTPUT_SEQUENCE_LENGTH; i++)
   {
-    printf("%d ", output_buffer[i]);
-    if ((i + 1) % OUTPUT_SEQUENCE_LENGTH == 0)
-      printf("\n");
+    if (i % NUM_FEATURES == 0)
+      printf("[");
+    printf("%f ", input_tensor_arr[i]);
+    if ((i + 1) % NUM_FEATURES == 0)
+      printf("],\n");
   }
   printf("\n");
 }
 
 // Preprocesses the buffer to the input
 void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffer,
-                                int8_t *output_buffer)
+                                float *input_tensor_arr)
 {
-  // Initialize buffers
-  if (!init_buffers())
-  {
-    printf("Failed to allocate preprocessing buffers\n");
-    return;
-  }
+  // // Allocate recent_data on heap
+  // TimeSeriesDataPoint *recent_data = new TimeSeriesDataPoint[GRAB_LEN];
+  // if (!recent_data)
+  // {
+  //   printf("Failed to allocate recent_data buffer\n");
+  //   return;
+  // }
 
-  // Allocate recent_data on heap
-  TimeSeriesDataPoint *recent_data = new (std::nothrow) TimeSeriesDataPoint[GRAB_LEN];
-  if (!recent_data)
-  {
-    printf("Failed to allocate recent_data buffer\n");
-    cleanup_buffers();
-    return;
-  }
+  // printf("Getting recent data\n");
+  // buffer.getRecent(GRAB_LEN, recent_data);
 
-  printf("Getting recent data\n");
-  buffer.getRecent(GRAB_LEN, recent_data);
+  // printf("Window averaging\n");
+  // window_avg(recent_data, input_tensor_arr);
 
-  printf("Copying to temp buffer\n");
-  copy_to_temp_buffer(recent_data);
+  // data_2d_lift_instability
+  // data_2d_no_lift
+  // data_2d_off_axis
+  // data_2d_partial_motion
+  // data_2d_perfect_form
+  // data_2d_swinging_weight
 
-  printf("Window averaging\n");
-  for (size_t feature = 0; feature < NUM_FEATURES; feature++)
-  {
-    window_avg_find_range(feature);
-  }
+  printf("Force input tensor to data class: off_axis\n");
+  force_input_tensor_to_data(input_tensor_arr, data_2d_off_axis);
 
-  printf("Overriding Feature Ranges with hardcoded values\n");
-  hardcode_feature_ranges();
-
-  printf("Normalizing and quantizing\n");
-  for (size_t feature = 0; feature < NUM_FEATURES; feature++)
-  {
-    normalize_and_quantize(feature, output_buffer);
-  }
-
-  // inspect_output_buffer(output_buffer);
+  // inspect_output_buffer(input_tensor_arr);
 
   // Cleanup
-  delete[] recent_data;
-  cleanup_buffers();
+  // delete[] recent_data;
 
   printf("Preprocessing complete\n");
+}
+
+static void force_input_tensor_to_data(float *input_tensor_arr, float data_2d_array[OUTPUT_SEQUENCE_LENGTH][NUM_FEATURES])
+{
+  for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
+  {
+    for (size_t j = 0; j < NUM_FEATURES; j++)
+    {
+      input_tensor_arr[i * NUM_FEATURES + j] = data_2d_array[i][j];
+    }
+  }
 }

@@ -4,6 +4,11 @@
 const int target_samples = 50;      // Number of samples to collect (50 * 5 ms = 250 ms)
 const int sampling_interval_ms = 1; // Interval between samples
 
+const int ACCEL_MIN = -25.09375;
+const int ACCEL_MAX = 30.8825;
+const int GYRO_MIN = -8.54875;
+const int GYRO_MAX = 7.995;
+
 void imuSetup()
 {
   // Initialize MPU6050
@@ -44,13 +49,22 @@ void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
 void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ)
 {
   TimeSeriesDataPoint dataPoint = {
-      .aX = static_cast<float>(aX),
-      .aY = static_cast<float>(aY),
-      .aZ = static_cast<float>(aZ),
-      .gX = static_cast<float>(gX),
-      .gY = static_cast<float>(gY),
-      .gZ = static_cast<float>(gZ)};
+      .aX = normalize_value(aX, ACCEL_MIN, ACCEL_MAX),
+      .aY = normalize_value(aY, ACCEL_MIN, ACCEL_MAX),
+      .aZ = normalize_value(aZ, ACCEL_MIN, ACCEL_MAX),
+      .gX = normalize_value(gX, GYRO_MIN, GYRO_MAX),
+      .gY = normalize_value(gY, GYRO_MIN, GYRO_MAX),
+      .gZ = normalize_value(gZ, GYRO_MIN, GYRO_MAX)};
 
   // Add to circular buffer
   buffer.push(dataPoint);
+}
+
+float normalize_value(float value, float min, float max)
+{
+  float normalized = (value - min) / (max - min);
+  // Clamp to 0-1
+  normalized = (normalized < 0) ? 0 : (normalized > 1) ? 1
+                                                       : normalized;
+  return normalized;
 }

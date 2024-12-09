@@ -6,3 +6,5 @@
 void imuSetup();
 void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer);
 void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ);
+
+float normalize_value(float value, float min, float max);
