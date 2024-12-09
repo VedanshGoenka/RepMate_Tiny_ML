@@ -2,7 +2,7 @@
 #include <float.h>
 
 // Applies a moving average to the sensor data and tracks the range to feature_ranges
-static void window_avg(TimeSeriesDataPoint *recent_data, float *input_tensor_arr)
+static void window_avg(float *buffer, float *input_tensor_arr)
 {
   const size_t window_size = AVERAGING_WINDOW;
 
@@ -17,39 +17,21 @@ static void window_avg(TimeSeriesDataPoint *recent_data, float *input_tensor_arr
   // Process each time step
   for (size_t i = 0; i < OUTPUT_SEQUENCE_LENGTH; i++)
   {
-    // For each time step, compute averages for all features
+    // For each feature
     for (size_t feature = 0; feature < NUM_FEATURES; feature++)
     {
       float sum = 0;
+      // Calculate start position for this window
+      size_t window_start = i * window_size * NUM_FEATURES;
+      
+      // Sum up window_size samples for this feature
       for (size_t j = 0; j < window_size; j++)
       {
-        float value;
-        switch (feature)
-        {
-        case 0:
-          value = recent_data[i * window_size + j].aX;
-          break;
-        case 1:
-          value = recent_data[i * window_size + j].aY;
-          break;
-        case 2:
-          value = recent_data[i * window_size + j].aZ;
-          break;
-        case 3:
-          value = recent_data[i * window_size + j].gX;
-          break;
-        case 4:
-          value = recent_data[i * window_size + j].gY;
-          break;
-        case 5:
-          value = recent_data[i * window_size + j].gZ;
-          break;
-        default:
-          throw std::runtime_error("Invalid feature index");
-        }
-        sum += value;
+        // Access pattern: window_start + (sample_offset * NUM_FEATURES) + feature_idx
+        sum += buffer[window_start + (j * NUM_FEATURES) + feature];
       }
-      // Store in interleaved format: (sample_idx * NUM_FEATURES + feature_idx)
+      
+      // Store averaged result
       input_tensor_arr[i * NUM_FEATURES + feature] = sum / window_size;
     }
   }
@@ -70,23 +52,18 @@ static void inspect_output_buffer(float *input_tensor_arr)
 }
 
 // Preprocesses the buffer to the input
-template <template <typename> class T>
-void preprocess_buffer_to_input(const T<TimeSeriesDataPoint> &buffer,
-                                float *input_tensor_arr)
+void preprocess_buffer_to_input(float buffer[], float *input_tensor_arr)
 {
   // Allocate recent_data on heap
-  TimeSeriesDataPoint *recent_data = new TimeSeriesDataPoint[GRAB_LEN];
+  float *recent_data = new float[GRAB_LEN];
   if (!recent_data)
   {
     printf("Failed to allocate recent_data buffer\n");
     return;
   }
 
-  printf("Getting recent data\n");
-  buffer.getRecent(GRAB_LEN, recent_data);
-
   printf("Window averaging\n");
-  window_avg(recent_data, input_tensor_arr);
+  window_avg(buffer, input_tensor_arr);
 
   // DEBUG //
 
@@ -120,7 +97,3 @@ static void force_input_tensor_to_data(float *input_tensor_arr, float data_2d_ar
     }
   }
 }
-
-// Explicit template instantiation
-template void preprocess_buffer_to_input<FlatBuffer>(const FlatBuffer<TimeSeriesDataPoint> &buffer, float *input_tensor_arr);
-template void preprocess_buffer_to_input<CircularBuffer>(const CircularBuffer<TimeSeriesDataPoint> &buffer, float *input_tensor_arr);

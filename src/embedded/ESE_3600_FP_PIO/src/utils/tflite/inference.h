@@ -4,10 +4,7 @@
 #define INFERENCE_H_
 
 #include "model.h"
-#include "circular_buffer.h"
 #include "pre_process.h"
-#include "flat_buffer.h"
-
 #include "main.h"
 
 #include <TensorFlowLite_ESP32.h>
@@ -28,7 +25,7 @@ extern const char *labels[];
 extern const bool DEBUG_OUTPUT;
 
 // Buffer to store IMU data - update to use template type selection
-extern FlatBuffer<TimeSeriesDataPoint> dataBuffer;
+extern float dataBuffer[];
 
 // Core inference functions
 void setupModel(bool verbose);

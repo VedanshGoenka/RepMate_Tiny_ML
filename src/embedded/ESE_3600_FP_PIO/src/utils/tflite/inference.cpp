@@ -7,7 +7,7 @@ const char *labels[label_count] = {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"};
 const bool DEBUG_OUTPUT = true;
 
 // Buffer to store IMU data - update to use template type selection
-FlatBuffer<TimeSeriesDataPoint> dataBuffer;
+float dataBuffer[NUM_FEATURES * BUFFER_LEN];
 
 // TensorFlow Lite globals
 namespace
@@ -112,14 +112,6 @@ void doInference()
            input->params.scale, input->params.zero_point);
     printf("Output quantization - scale: %f, zero_point: %d\n",
            output->params.scale, output->params.zero_point);
-  }
-
-  if (dataBuffer.size() < GRAB_LEN)
-  {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Insufficient data in buffer for inference. Need %d samples, have %zu",
-                         GRAB_LEN, dataBuffer.size());
-    return;
   }
 
   try

@@ -20,7 +20,7 @@ extern String current_lift;
 extern const char buffer_type;
 
 // Define the buffer using the selected type
-extern FlatBuffer<TimeSeriesDataPoint> dataBuffer;
+extern float dataBuffer[];
 
 // Setup and Loop functions
 void setup();
