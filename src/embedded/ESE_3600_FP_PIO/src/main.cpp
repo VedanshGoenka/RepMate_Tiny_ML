@@ -13,7 +13,7 @@ const uint8_t LEDpins[5] = {D0, D1, D2, D3, D6};
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
 String current_lift = lift_names[0];
 
-int current_lift_idx = 2; // {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"}
+int current_lift_idx = 1; // {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"}
 
 // {"Lift Instability", "No Lift", "Off-Axis", "Perfect Form", "Partial Motion", "Swinging Weight"}
 const char *current_lift_name = getCurrentLiftName(current_lift_idx);
@@ -65,13 +65,8 @@ void loop()
   }
   else if (run_inference)
   {
-    if (buzzer_enabled)
-    {
-      buzz(1000, 100);
-    }
 
-    // Collect data
-    imuCollect(dataBuffer);
+    printf("Starting Data Collection\n");
 
     if (buzzer_enabled)
     {
@@ -81,6 +76,15 @@ void loop()
         buzz(1000, 100);
       }
     }
+    // Collect data
+    imuCollect(dataBuffer);
+
+    if (buzzer_enabled)
+    {
+      buzz(1000, 100);
+    }
+
+    printf("Collected Data\n");
 
     // Run inference
     doInference(); // This updates the current_lift_idx
@@ -119,9 +123,9 @@ void loop()
 
     if (ble_enabled)
     {
-      printf("BLE loop\n\n");
+      // printf("BLE loop\n\n");
       BLEloop(String("Lift was classified as: ") + current_lift_name);
     }
-    delay(5000);
+    delay(2000);
   }
 }

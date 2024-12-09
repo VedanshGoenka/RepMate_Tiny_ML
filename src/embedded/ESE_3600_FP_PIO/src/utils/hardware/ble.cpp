@@ -146,7 +146,7 @@ void BLEloop(String message)
 
   if (connected)
   {
-    printf("Setting Lift History to: \"%s\"\n", message.c_str());
+    printf("Sending message to User: \"%s\"\n", message.c_str());
     pRemoteCharacteristic->writeValue(message.c_str(), message.length());
   }
   else if (doScan)
