@@ -174,6 +174,8 @@ void doInference()
         }
       }
 
+      current_lift_idx = max_idx;
+
       // Print final prediction
       printf("\nPredicted class: %s (confidence: %.2f%%)\n",
              labels[max_idx], max_prob * 100);
@@ -218,8 +220,6 @@ void getInferenceResult()
   // Apply softmax to the output values
   float softmax_values[label_count];
   applySoftmax(output_values, label_count, softmax_values);
-
-  current_lift_idx = max_index;
 
   printf("\n");
   printf("Inference result: %s with confidence %.2f\n", labels[max_index], softmax_values[max_index]);
