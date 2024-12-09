@@ -13,6 +13,7 @@ String current_lift = lift_names[0];
 
 void setup()
 {
+  printf("Setup\n");
   if (copy_files)
   {
     copy_files_setup();
@@ -40,6 +41,7 @@ void setup()
   {
     setupBLE();
   }
+  printf("Setup complete\n");
 }
 
 void loop()

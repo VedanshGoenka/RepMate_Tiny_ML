@@ -4,24 +4,21 @@
 template <typename T>
 CircularBuffer<T>::CircularBuffer()
 {
-  if (psramFound())
-  {
-    buffer = (T *)ps_malloc(BUFFER_LENGTH * sizeof(T));
-  }
-  else
-  {
-    buffer = new T[BUFFER_LENGTH];
-  }
+  buffer = (T *)ps_malloc(BUFFER_LENGTH * sizeof(T));
   head = 0;
   tail = 0;
   count = 0;
+  if (!buffer)
+  {
+    throw std::runtime_error("Failed to allocate buffer memory");
+  }
 }
 
 // Destructor implementation
 template <typename T>
 CircularBuffer<T>::~CircularBuffer()
 {
-  delete[] buffer;
+  heap_caps_free(buffer);
 }
 
 // Add a data point to the buffer
@@ -58,6 +55,9 @@ T CircularBuffer<T>::get(size_t index) const
 template <typename T>
 void CircularBuffer<T>::getData(float *output, size_t required_length) const
 {
+  if (!output) {
+    throw std::runtime_error("Output buffer is null");
+  }
   if (required_length > count)
   {
     throw std::runtime_error("Not enough data in buffer");
@@ -128,8 +128,8 @@ void CircularBuffer<T>::getRecent(size_t n, T *output) const
   // Calculate start position for copying
   size_t start = (head >= n) ? (head - n) : (BUFFER_LENGTH - (n - head));
 
-  // printf("Buffer stats - head: %zu, count: %zu, n: %zu, start: %zu\n",
-  //        head, count, n, start);
+  printf("Buffer stats - head: %zu, count: %zu, n: %zu, start: %zu\n",
+         head, count, n, start);
 
   // Copy the most recent n elements with proper alignment handling
   for (size_t i = 0; i < n; i++)

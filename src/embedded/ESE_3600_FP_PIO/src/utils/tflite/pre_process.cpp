@@ -19,54 +19,34 @@ static void hardcode_feature_ranges()
 // Initialize buffers
 static bool init_buffers()
 {
-  try
+  temp_buffer = (float(*)[GRAB_LEN])ps_malloc(NUM_FEATURES * GRAB_LEN * sizeof(float));
+  if (!temp_buffer)
   {
-    if (!temp_buffer)
-    {
-      if (psramFound())
-      {
-        temp_buffer = (float(*)[GRAB_LEN])ps_malloc(NUM_FEATURES * GRAB_LEN * sizeof(float));
-      }
-      else
-      {
-        temp_buffer = new float[NUM_FEATURES][GRAB_LEN];
-      }
-    }
-    if (!averaged_buffer)
-    {
-      if (psramFound())
-      {
-        averaged_buffer = (float(*)[OUTPUT_SEQUENCE_LENGTH])ps_malloc(NUM_FEATURES * OUTPUT_SEQUENCE_LENGTH * sizeof(float));
-      }
-      else
-      {
-        averaged_buffer = new float[NUM_FEATURES][OUTPUT_SEQUENCE_LENGTH];
-      }
-    }
-    if (!feature_ranges)
-    {
-      feature_ranges = new float[2][2];
-      hardcode_feature_ranges();
-    }
-    return true;
-  }
-  catch (const std::bad_alloc &e)
-  {
-    cleanup_buffers();
-    printf("Failed to allocate preprocessing buffers: %s\n", e.what());
     return false;
   }
+  averaged_buffer = (float(*)[OUTPUT_SEQUENCE_LENGTH])ps_malloc(NUM_FEATURES * OUTPUT_SEQUENCE_LENGTH * sizeof(float));
+  if (!averaged_buffer)
+  {
+    heap_caps_free(temp_buffer);
+    return false;
+  }
+  feature_ranges = (float(*)[2])ps_malloc(2 * 2 * sizeof(float));
+  if (!feature_ranges)
+  {
+    heap_caps_free(temp_buffer);
+    heap_caps_free(averaged_buffer);
+    return false;
+  }
+  hardcode_feature_ranges();
+  return true;
 }
 
 // Cleanup buffers
 static void cleanup_buffers()
 {
-  delete[] temp_buffer;
-  delete[] averaged_buffer;
-  delete[] feature_ranges;
-  temp_buffer = nullptr;
-  averaged_buffer = nullptr;
-  feature_ranges = nullptr;
+  heap_caps_free(temp_buffer);
+  heap_caps_free(averaged_buffer);
+  heap_caps_free(feature_ranges);
 }
 
 // Copies sensor data to the temporary buffer

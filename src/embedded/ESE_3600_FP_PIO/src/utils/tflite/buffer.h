@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <esp32-hal-psram.h>
+#include <esp_heap_caps.h>
 
 // Buffer Size
 constexpr size_t BUFFER_LENGTH = 1100;

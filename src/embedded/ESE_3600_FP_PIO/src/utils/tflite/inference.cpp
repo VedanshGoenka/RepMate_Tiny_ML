@@ -18,8 +18,8 @@ namespace
   tflite::MicroInterpreter *interpreter = nullptr;
   tflite::AllOpsResolver resolver;
   constexpr int kTensorArenaSize = 128 * 1024;
-  static uint8_t* tensor_arena = nullptr;
-  static uint8_t* model_buffer = nullptr;
+  static uint8_t *tensor_arena = nullptr;
+  static uint8_t *model_buffer = nullptr;
 }
 
 void setupModel(bool verbose = false)
@@ -29,28 +29,32 @@ void setupModel(bool verbose = false)
   error_reporter = &micro_error_reporter;
 
   // Load model into PSRAM
-  if (!model) {
-    if (!psramFound()) {
+  if (!model)
+  {
+    if (!psramFound())
+    {
       TF_LITE_REPORT_ERROR(error_reporter, "PSRAM not found!");
       return;
     }
-    
+
     size_t model_size = g_rep_mate_model_data_len;
     TF_LITE_REPORT_ERROR(error_reporter, "Model size: %d bytes", (int)model_size);
-    
+
     // Debug model data
     // inspectModelData(g_rep_mate_model_data, model_size);
-    
-    model_buffer = (uint8_t*)ps_malloc(model_size);
-    if (!model_buffer) {
+
+    model_buffer = (uint8_t *)ps_malloc(model_size);
+    if (!model_buffer)
+    {
       TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate model buffer!");
       return;
     }
 
     memcpy(model_buffer, g_rep_mate_model_data, model_size);
     model = tflite::GetModel(model_buffer);
-    
-    if (!model) {
+
+    if (!model)
+    {
       TF_LITE_REPORT_ERROR(error_reporter, "Failed to get model from buffer");
       return;
     }
@@ -59,9 +63,11 @@ void setupModel(bool verbose = false)
   }
 
   // Allocate tensor arena
-  if (!tensor_arena) {
-    tensor_arena = (uint8_t*)ps_malloc(kTensorArenaSize);
-    if (!tensor_arena) {
+  if (!tensor_arena)
+  {
+    tensor_arena = (uint8_t *)ps_malloc(kTensorArenaSize);
+    if (!tensor_arena)
+    {
       TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate tensor arena!");
       return;
     }
@@ -73,7 +79,8 @@ void setupModel(bool verbose = false)
   interpreter = &static_interpreter;
 
   // Allocate tensors
-  if (interpreter->AllocateTensors() != kTfLiteOk) {
+  if (interpreter->AllocateTensors() != kTfLiteOk)
+  {
     TF_LITE_REPORT_ERROR(error_reporter, "Failed to allocate tensors!");
     return;
   }
@@ -87,9 +94,19 @@ void setupModel(bool verbose = false)
 
 void doInference()
 {
+  printModelDetails(true);
+
+  if (!interpreter)
+  {
+    TF_LITE_REPORT_ERROR(error_reporter, "Interpreter not initialized");
+    printf("Interpreter not initialized");
+    return;
+  }
+
   TfLiteTensor *input = interpreter->input(0);
-  
-  if (!input) {
+
+  if (!input)
+  {
     TF_LITE_REPORT_ERROR(error_reporter, "Failed to get input tensor");
     return;
   }
@@ -97,32 +114,37 @@ void doInference()
   // Verify input shape
   // inspectInputShape(input, error_reporter);
 
-  try {
+  try
+  {
     // Preprocess data
     preprocess_buffer_to_input(dataBuffer, input->data.f);
 
     // Show input statistics
-    if (DEBUG_OUTPUT) {
+    if (DEBUG_OUTPUT)
+    {
       inspectInputStats(input);
     }
 
     // Run inference
     TfLiteStatus invoke_status = interpreter->Invoke();
-    if (invoke_status != kTfLiteOk) {
+    if (invoke_status != kTfLiteOk)
+    {
       TF_LITE_REPORT_ERROR(error_reporter, "Invoke failed");
       return;
     }
 
     // Show output details
-    TfLiteTensor* output = interpreter->output(0);
-    if (DEBUG_OUTPUT && output) {
+    TfLiteTensor *output = interpreter->output(0);
+    if (DEBUG_OUTPUT && output)
+    {
       inspectOutputValues(output, labels, label_count);
     }
 
     // Get inference result
     getInferenceResult();
   }
-  catch (const std::exception& e) {
+  catch (const std::exception &e)
+  {
     TF_LITE_REPORT_ERROR(error_reporter, "Exception: %s", e.what());
   }
 }
