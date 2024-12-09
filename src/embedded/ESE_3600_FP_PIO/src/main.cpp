@@ -11,6 +11,11 @@ const bool ble_enabled = true;          // If true, BLE is enabled
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
 String current_lift = lift_names[0];
 
+// Buffer Constants
+
+// Define the buffer using the selected type
+extern float dataBuffer[];
+
 void setup()
 {
   if (copy_files)
@@ -28,17 +33,10 @@ void setup()
 
     // Setup TFLite
     setupModel(false);
-
-    // Prime the data buffer with ~5 seconds of data
-    for (int i = 0; i < 5000 / 250; ++i) // 5000 ms / 250 ms = 20 samples
-    {
-      imuCollect(dataBuffer);
-    }
-    printf("Prime complete\n");
-    if (ble_enabled)
-    {
-      BLEsetup();
-    }
+  }
+  if (ble_enabled)
+  {
+    setupBLE();
   }
 }
 
@@ -56,7 +54,6 @@ void loop()
   {
     // Collect data
     imuCollect(dataBuffer);
-
     // Run inference
     doInference();
 

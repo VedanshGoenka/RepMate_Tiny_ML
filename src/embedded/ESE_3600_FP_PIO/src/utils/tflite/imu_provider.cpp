@@ -1,8 +1,12 @@
 #include "imu_provider.h"
 #include "../hardware/mpu.h"
 
-const int target_samples = 50;      // Number of samples to collect (50 * 5 ms = 250 ms)
 const int sampling_interval_ms = 1; // Interval between samples
+
+const int ACCEL_MIN = -25.09375;
+const int ACCEL_MAX = 30.8825;
+const int GYRO_MIN = -8.54875;
+const int GYRO_MAX = 7.995;
 
 void imuSetup()
 {
@@ -17,40 +21,31 @@ void imuSetup()
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 }
 
-void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
+// Collect into a flattened buffer (simple float array)
+void imuCollect(float *buffer)
 {
-
-  for (int i = 0; i < target_samples; ++i)
+  for (int i = 0; i < BUFFER_LEN; ++i)
   {
     // Fetch IMU data
     sensors_event_t accel, gyro, temp;
     mpu.getEvent(&accel, &gyro, &temp);
 
-    // Add data to the buffer
-    addDataToBuffer(
-        buffer,
-        accel.acceleration.x,
-        accel.acceleration.y,
-        accel.acceleration.z,
-        gyro.gyro.x,
-        gyro.gyro.y,
-        gyro.gyro.z);
+    buffer[i * NUM_FEATURES] = normalize_value(accel.acceleration.x, ACCEL_MIN, ACCEL_MAX);
+    buffer[i * NUM_FEATURES + 1] = normalize_value(accel.acceleration.y, ACCEL_MIN, ACCEL_MAX);
+    buffer[i * NUM_FEATURES + 2] = normalize_value(accel.acceleration.z, ACCEL_MIN, ACCEL_MAX);
+    buffer[i * NUM_FEATURES + 3] = normalize_value(gyro.gyro.x, GYRO_MIN, GYRO_MAX);
+    buffer[i * NUM_FEATURES + 4] = normalize_value(gyro.gyro.y, GYRO_MIN, GYRO_MAX);
+    buffer[i * NUM_FEATURES + 5] = normalize_value(gyro.gyro.z, GYRO_MIN, GYRO_MAX);
 
-    // Wait for the next sampling interval
     delay(sampling_interval_ms);
   }
 }
 
-void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ)
+float normalize_value(float value, float min, float max)
 {
-  TimeSeriesDataPoint dataPoint = {
-      .aX = static_cast<float>(aX),
-      .aY = static_cast<float>(aY),
-      .aZ = static_cast<float>(aZ),
-      .gX = static_cast<float>(gX),
-      .gY = static_cast<float>(gY),
-      .gZ = static_cast<float>(gZ)};
-
-  // Add to circular buffer
-  buffer.push(dataPoint);
+  float normalized = (value - min) / (max - min);
+  // Clamp to 0-1
+  normalized = (normalized < 0) ? 0 : (normalized > 1) ? 1
+                                                       : normalized;
+  return normalized;
 }

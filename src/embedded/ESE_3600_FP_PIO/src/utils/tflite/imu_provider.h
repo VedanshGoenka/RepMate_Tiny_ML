@@ -1,8 +1,11 @@
 #pragma once
 
 #include <Adafruit_MPU6050.h>
-#include "buffer.h"
+
+const int NUM_FEATURES = 6;
+const int BUFFER_LEN = 1000;
 
 void imuSetup();
-void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer);
-void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ);
+
+void imuCollect(float *buffer);
+float normalize_value(float value, float min, float max);
