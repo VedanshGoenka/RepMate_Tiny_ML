@@ -70,22 +70,25 @@ static void inspect_output_buffer(float *input_tensor_arr)
 }
 
 // Preprocesses the buffer to the input
-void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffer,
+template <template <typename> class T>
+void preprocess_buffer_to_input(const T<TimeSeriesDataPoint> &buffer,
                                 float *input_tensor_arr)
 {
-  // // Allocate recent_data on heap
-  // TimeSeriesDataPoint *recent_data = new TimeSeriesDataPoint[GRAB_LEN];
-  // if (!recent_data)
-  // {
-  //   printf("Failed to allocate recent_data buffer\n");
-  //   return;
-  // }
+  // Allocate recent_data on heap
+  TimeSeriesDataPoint *recent_data = new TimeSeriesDataPoint[GRAB_LEN];
+  if (!recent_data)
+  {
+    printf("Failed to allocate recent_data buffer\n");
+    return;
+  }
 
-  // printf("Getting recent data\n");
-  // buffer.getRecent(GRAB_LEN, recent_data);
+  printf("Getting recent data\n");
+  buffer.getRecent(GRAB_LEN, recent_data);
 
-  // printf("Window averaging\n");
-  // window_avg(recent_data, input_tensor_arr);
+  printf("Window averaging\n");
+  window_avg(recent_data, input_tensor_arr);
+
+  // DEBUG //
 
   // data_2d_lift_instability
   // data_2d_no_lift
@@ -94,13 +97,15 @@ void preprocess_buffer_to_input(const CircularBuffer<TimeSeriesDataPoint> &buffe
   // data_2d_perfect_form
   // data_2d_swinging_weight
 
-  printf("Force input tensor to data class: off_axis\n");
-  force_input_tensor_to_data(input_tensor_arr, data_2d_off_axis);
+  // printf("Force input tensor to data class: off_axis\n");
+  // force_input_tensor_to_data(input_tensor_arr, data_2d_off_axis);
 
   // inspect_output_buffer(input_tensor_arr);
 
+  // DEBUG //
+
   // Cleanup
-  // delete[] recent_data;
+  delete[] recent_data;
 
   printf("Preprocessing complete\n");
 }
@@ -115,3 +120,7 @@ static void force_input_tensor_to_data(float *input_tensor_arr, float data_2d_ar
     }
   }
 }
+
+// Explicit template instantiation
+template void preprocess_buffer_to_input<FlatBuffer>(const FlatBuffer<TimeSeriesDataPoint> &buffer, float *input_tensor_arr);
+template void preprocess_buffer_to_input<CircularBuffer>(const CircularBuffer<TimeSeriesDataPoint> &buffer, float *input_tensor_arr);

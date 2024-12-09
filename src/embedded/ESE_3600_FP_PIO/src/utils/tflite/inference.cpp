@@ -6,8 +6,8 @@ const char *labels[label_count] = {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"};
 
 const bool DEBUG_OUTPUT = true;
 
-// Buffer to store IMU data
-CircularBuffer<TimeSeriesDataPoint> dataBuffer;
+// Buffer to store IMU data - update to use template type selection
+FlatBuffer<TimeSeriesDataPoint> dataBuffer;
 
 // TensorFlow Lite globals
 namespace

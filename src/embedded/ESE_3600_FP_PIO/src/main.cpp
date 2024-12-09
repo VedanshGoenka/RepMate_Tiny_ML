@@ -11,6 +11,12 @@ const bool ble_enabled = false;          // If true, BLE is enabled
 const String lift_names[3] = {"dC", "bP", "dF"}; // dumbbell curl, bench press, dumbbell flys
 String current_lift = lift_names[0];
 
+// Buffer Constants
+constexpr char buffer_type = 'f'; // 'c' for CircularBuffer, 'f' for FlatBuffer
+
+// Define the buffer using the selected type
+extern FlatBuffer<TimeSeriesDataPoint> dataBuffer;
+
 void setup()
 {
   if (copy_files)

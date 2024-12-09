@@ -17,7 +17,10 @@ extern const String lift_names[3];
 extern String current_lift;
 
 // Buffer Constants
-extern CircularBuffer<TimeSeriesDataPoint> dataBuffer;
+extern const char buffer_type;
+
+// Define the buffer using the selected type
+extern FlatBuffer<TimeSeriesDataPoint> dataBuffer;
 
 // Setup and Loop functions
 void setup();

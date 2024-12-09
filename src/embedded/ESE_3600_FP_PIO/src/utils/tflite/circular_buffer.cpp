@@ -1,4 +1,4 @@
-#include "buffer.h"
+#include "circular_buffer.h"
 
 // Constructor implementation
 template <typename T>

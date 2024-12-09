@@ -9,6 +9,8 @@ const int ACCEL_MAX = 30.8825;
 const int GYRO_MIN = -8.54875;
 const int GYRO_MAX = 7.995;
 
+const int FLAT_BUFFER_MAX_ITER = 1000;
+
 void imuSetup()
 {
   // Initialize MPU6050
@@ -22,7 +24,7 @@ void imuSetup()
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 }
 
-void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
+void imuCircularCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
 {
 
   for (int i = 0; i < target_samples; ++i)
@@ -46,7 +48,38 @@ void imuCollect(CircularBuffer<TimeSeriesDataPoint> &buffer)
   }
 }
 
-void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ)
+void imuFlatCollect(FlatBuffer<TimeSeriesDataPoint> &buffer)
+{
+  int count = 0;
+
+  printf("Starting flat buffer collection\n");
+
+  while (count < FLAT_BUFFER_MAX_ITER || !buffer.isFull())
+  {
+    // Fetch IMU data
+    sensors_event_t accel, gyro, temp;
+    mpu.getEvent(&accel, &gyro, &temp);
+
+    // Add data to the buffer
+    addDataToBuffer(
+        buffer,
+        accel.acceleration.x,
+        accel.acceleration.y,
+        accel.acceleration.z,
+        gyro.gyro.x,
+        gyro.gyro.y,
+        gyro.gyro.z);
+
+    count++;
+    // Wait for the next sampling interval
+    delay(sampling_interval_ms);
+  }
+
+  printf("Flat buffer collection complete\n");
+}
+
+template <template <typename> class T>
+void addDataToBuffer(T<TimeSeriesDataPoint> &buffer, float aX, float aY, float aZ, float gX, float gY, float gZ)
 {
   TimeSeriesDataPoint dataPoint = {
       .aX = normalize_value(aX, ACCEL_MIN, ACCEL_MAX),
@@ -56,7 +89,6 @@ void addDataToBuffer(CircularBuffer<TimeSeriesDataPoint> &buffer, float aX, floa
       .gY = normalize_value(gY, GYRO_MIN, GYRO_MAX),
       .gZ = normalize_value(gZ, GYRO_MIN, GYRO_MAX)};
 
-  // Add to circular buffer
   buffer.push(dataPoint);
 }
 
@@ -68,3 +100,29 @@ float normalize_value(float value, float min, float max)
                                                        : normalized;
   return normalized;
 }
+
+template <template <typename> class T>
+void imuCollect(T<TimeSeriesDataPoint> &buffer)
+{
+  // Use std::is_same to check buffer type and call appropriate collection method
+  if (std::is_same<T<TimeSeriesDataPoint>, CircularBuffer<TimeSeriesDataPoint>>::value)
+  {
+    imuCircularCollect(reinterpret_cast<CircularBuffer<TimeSeriesDataPoint> &>(buffer));
+  }
+  else if (std::is_same<T<TimeSeriesDataPoint>, FlatBuffer<TimeSeriesDataPoint>>::value)
+  {
+    imuFlatCollect(reinterpret_cast<FlatBuffer<TimeSeriesDataPoint> &>(buffer));
+  }
+  else
+  {
+    // Handle unsupported buffer type
+    static_assert(
+        std::is_same<T<TimeSeriesDataPoint>, CircularBuffer<TimeSeriesDataPoint>>::value ||
+            std::is_same<T<TimeSeriesDataPoint>, FlatBuffer<TimeSeriesDataPoint>>::value,
+        "Unsupported buffer type");
+  }
+}
+
+// Explicit template instantiation
+template void imuCollect<FlatBuffer>(FlatBuffer<TimeSeriesDataPoint> &buffer);
+template void imuCollect<CircularBuffer>(CircularBuffer<TimeSeriesDataPoint> &buffer);

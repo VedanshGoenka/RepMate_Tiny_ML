@@ -6,8 +6,8 @@
 #include <cstring>
 
 // Buffer Size
-constexpr size_t BUFFER_LENGTH = 1100; // 7.5 seconds at 5 ms intervals
-constexpr size_t NUM_FEATURES = 6;
+const size_t BUFFER_LENGTH = 1000; // 5 seconds at 5 ms intervals
+const size_t NUM_FEATURES = 6;
 
 // Define the data point structure
 struct __attribute__((packed)) TimeSeriesDataPoint
