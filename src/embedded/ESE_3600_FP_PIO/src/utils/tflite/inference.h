@@ -20,6 +20,9 @@
 // Define label count and labels
 extern const int label_count;
 extern const char *labels[];
+extern const char *full_label_classes[];
+
+extern int current_lift_idx;
 
 // Debug control
 extern const bool DEBUG_OUTPUT;
@@ -43,5 +46,7 @@ void outputLights(int index);
 // Debug and utility functions
 const char *getTfLiteTypeName(TfLiteType type);
 void printModelDetails(bool shouldPrint);
+
+const char *getCurrentLiftName(int current_lift_idx);
 
 #endif

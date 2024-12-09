@@ -1,8 +1,10 @@
 #include "inference.h"
 
+
 // Define the label variables that were declared extern in the header
 const int label_count = 6;
 const char *labels[label_count] = {"l_i", "n_l", "o_a", "p_f", "p_m", "s_w"};
+const char *full_label_classes[label_count] = {"Lift Instability", "No Lift", "Off-Axis", "Perfect Form", "Partial Motion", "Swinging Weight"};
 
 const bool DEBUG_OUTPUT = true;
 
@@ -217,6 +219,8 @@ void getInferenceResult()
   float softmax_values[label_count];
   applySoftmax(output_values, label_count, softmax_values);
 
+  current_lift_idx = max_index;
+
   printf("\n");
   printf("Inference result: %s with confidence %.2f\n", labels[max_index], softmax_values[max_index]);
   printf("\n");
@@ -356,4 +360,10 @@ void outputLights(int index)
     digitalWrite(pins[i], LOW);
   }
   digitalWrite(pins[index], HIGH);
+}
+
+
+const char* getCurrentLiftName(int current_lift_idx)
+{
+  return full_label_classes[current_lift_idx];
 }

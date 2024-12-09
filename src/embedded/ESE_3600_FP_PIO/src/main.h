@@ -8,6 +8,8 @@
 #include "utils/hardware/ble.h"
 #include "utils/hardware/buzzer.h"
 
+#include "utils/tflite/pre_process.h"
+
 // Setup Flags
 extern const bool copy_files;
 extern const bool force_reformat;
