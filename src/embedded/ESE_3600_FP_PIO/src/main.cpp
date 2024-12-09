@@ -36,7 +36,7 @@ void setup()
   }
   if (ble_enabled)
   {
-    setupBLE();
+    BLEsetup();
   }
 }
 

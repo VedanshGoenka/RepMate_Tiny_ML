@@ -21,7 +21,7 @@ namespace
 
   // Define memory for input, output, and intermediate tensors
   // kTensor Area size was too small, was originally 10 x 1024, making it larger
-  constexpr int kTensorArenaSize = 128 * 1024; // Adjust this as per the model's memory requirement
+  constexpr int kTensorArenaSize = 108 * 1024; // Adjust this as per the model's memory requirement
   uint8_t tensor_arena[kTensorArenaSize];
 }
 
