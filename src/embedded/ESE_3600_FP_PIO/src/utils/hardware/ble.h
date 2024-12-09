@@ -21,7 +21,7 @@ extern bool doScan;
 extern BLERemoteCharacteristic *pRemoteCharacteristic;
 extern BLEAdvertisedDevice *myDevice;
 
-static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
+static void notifyCallback(BLERemoteCharacteristic *pBLERemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify);
 bool connectToServer();
 class MyClientCallback;
 class MyAdvertisedDeviceCallbacks;

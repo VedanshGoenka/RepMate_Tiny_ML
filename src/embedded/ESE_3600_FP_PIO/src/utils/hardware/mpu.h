@@ -2,4 +2,4 @@
 
 #include <Adafruit_MPU6050.h>
 
-extern Adafruit_MPU6050 mpu; 
+extern Adafruit_MPU6050 mpu;
