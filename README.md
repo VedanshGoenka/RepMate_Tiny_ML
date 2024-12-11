@@ -9,6 +9,9 @@ RepMate is an intelligent workout assistant that uses machine learning to analyz
 - Vedansh Goenka (vedanshg[at]seas.upenn.edu) [@vedanshgoenka](https://github.com/vedanshgoenka)
 - Rohan Panday (rpanday[at]seas.upenn.edu) [@rp-seas](https://github.com/rp-seas)
 
+## Final Report
+[External Link](https://docs.google.com/document/d/14suUNHKm8XrC02RzAU51swQInUx69GyqMbsuufSj3Vk/edit?usp=sharing)
+
 ## Features
 
 - Real-time motion analysis using MPU6050 sensor (accelerometer + gyroscope)
@@ -22,6 +25,7 @@ RepMate is an intelligent workout assistant that uses machine learning to analyz
   - Partial Motion (p_m)
   - Off-Axis Movement (o_a)
   - Swinging Weight (s_w)
+  - No Lift (n_l)
 - TensorFlow Lite model for efficient on-device inference
 - JSON-based data collection for training and analysis
 
