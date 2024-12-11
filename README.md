@@ -1,4 +1,4 @@
-# RepMate: AI-Powered Workout Form Analysis
+# RepMate: Tiny ML-Powered Workout Form Analysis
 
 ## Overview
 
