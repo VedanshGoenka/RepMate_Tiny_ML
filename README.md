@@ -10,6 +10,7 @@ RepMate is an intelligent workout assistant that uses machine learning to analyz
 - Rohan Panday (rpanday[at]seas.upenn.edu) [@rp-seas](https://github.com/rp-seas)
 
 ## Final Report
+
 [External Link](https://docs.google.com/document/d/14suUNHKm8XrC02RzAU51swQInUx69GyqMbsuufSj3Vk/edit?usp=sharing)
 
 ## Features
