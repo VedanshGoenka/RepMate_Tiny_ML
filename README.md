@@ -216,25 +216,37 @@ Watch how different form types appear in our sensor data:
 
 #### Perfect Form
 
-https://github.com/VedanshGoenka/RepMate_Tiny_ML/raw/main/src/model/notebooks/anim/Dumbbell_Curl_Perfect_Form_.mp4
+https://github.com/user-attachments/assets/0308fd6b-007b-4d54-b29b-a882042b10ca
+
 *Animated visualization of perfect dumbbell curl form*
 
 #### Common Form Issues
 
 ##### Lift Instability
 
-https://github.com/VedanshGoenka/RepMate_Tiny_ML/raw/main/src/model/notebooks/anim/Dumbbell_Curl_Lift_Instability_.mp4
+https://github.com/user-attachments/assets/a70d95bf-0644-4a4b-90c3-d8a7e4b59dee
+
 *Animated visualization of unstable lift patterns*
 
 ##### Swinging Weight
 
-https://github.com/VedanshGoenka/RepMate_Tiny_ML/raw/main/src/model/notebooks/anim/Dumbbell_Curl_Swinging_Weight_.mp4
+
+https://github.com/user-attachments/assets/c14b5c34-dd4d-47e2-8aed-605320c3cb4e
+
+
 *Animated visualization of excessive swinging*
 
 ##### Partial Motion
 
-https://github.com/VedanshGoenka/RepMate_Tiny_ML/raw/main/src/model/notebooks/anim/Dumbbell_Curl_Partial_Motion_.mp4
+https://github.com/user-attachments/assets/9cd6e893-a417-4ad1-a81a-49b55347cedb
+
 *Animated visualization of incomplete range of motion*
+
+##### No Lift
+
+https://github.com/user-attachments/assets/eb1e538d-9987-4c2e-b513-913ba7daceda
+
+*Animated Visualization of holding the dumbbell in the rest position* 
 
 ### Static Motion Patterns
 
